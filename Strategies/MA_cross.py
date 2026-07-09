@@ -25,6 +25,6 @@ class MA_cross(Basic_Strategy):
         if delta_last > 0 and delta_prev < 0:
             balance = data_to_process['current_state'].iloc[-1].balance
             price = data_to_process['close'].iloc[-1]
-            return Open_Position(1,balance,price, price*1.1, price *0.9)
+            return Open_Position(1,balance,price, take_profit = price*1.1, stop_loss = price *0.9)
         else:
             return Open_Position(0,0,0, 0, 0)
