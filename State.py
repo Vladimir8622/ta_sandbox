@@ -3,3 +3,9 @@ class State:
         self.balance = balance
         self.positions = []
     
+    def copy(self):
+        new_state = State(balance=self.balance)
+        
+        new_state.positions = [pos.copy() for pos in self.positions]
+
+        return new_state

@@ -10,8 +10,8 @@ class Data_manager:
         df = pd.read_csv(file_path)
         df["begin"] = pd.to_datetime(df["begin"])
 
-        start_dt = pd.to_datetime(self.start)
-        end_dt = pd.to_datetime(self.end)
+        start_dt = pd.to_datetime(start)
+        end_dt = pd.to_datetime(end)
 
         mask = (df["begin"] >= start_dt) & (df["begin"] <= end_dt)
         df_filtered = df.loc[mask]

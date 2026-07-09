@@ -1,6 +1,5 @@
 from Brokers.Basic_Broker import Basic_Broker
-import Position
-
+from Position import Position
 class test_broker(Basic_Broker):
     def __init__(self, commissions, slippage):
         self.commissions = commissions
@@ -9,13 +8,13 @@ class test_broker(Basic_Broker):
     def check_response(self,current_state,response):
         new_state = current_state.copy()
 
-        if response.get_direction() == 1:
+        if response.direction == 1:
+            position = Position(1,new_state.balance,response.entry_price, response.take_profit, response.stop_loss)
             new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
-            position = Position(1)
             new_state.positions.append(position)
-        elif response.get_direction() == -1:
+        elif response.direction == -1:
+            position = Position(-1,new_state.balance,response.entry_price, response.take_profit, response.stop_loss)
             new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
-            position = Position(-1)
             new_state.positions.append(position)
         else:
             pass
@@ -24,7 +23,7 @@ class test_broker(Basic_Broker):
     def check_position(self, current_state, data):
         new_state = current_state.copy()
         last_price = data['close'].to_list()[-1]
-        positions = current_state.postions()
+        positions = current_state.positions
         for position in positions:
             current_direction = current_state.postions(position).direction
             stop_loss = current_state.postions(position).stop_loss

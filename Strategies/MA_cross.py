@@ -14,12 +14,13 @@ class MA_cross(Basic_Strategy):
         data_to_process['long_MA'] = data_to_process['close'].rolling(window=self.long_period).mean()
         data_to_process['short_MA'] = data_to_process['close'].rolling(window=self.short_period).mean()
         data_to_process['delta'] = data_to_process['long_MA'] - data_to_process['short_MA']
+        
+        data_to_process = data_to_process.dropna(subset=['delta'])
 
         # Берём два последних значения (индексы -1 и -2)
         delta_last = data_to_process['delta'].iloc[-1]
         delta_prev = data_to_process['delta'].iloc[-2]
-    
-        reversed_data = data_to_process.iloc[::-1]
+
 
         if delta_last > 0 and delta_prev < 0:
             balance = data_to_process['current_state'].iloc[-1].balance
