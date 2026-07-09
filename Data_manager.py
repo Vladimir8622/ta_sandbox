@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 
 class Data_manager:
-    def __init__(self, market, active, timeframe, name, start, end):
+    def __init__(self):
         pass             
 
     def get_data(self, market, active, timeframe, name, start, end):
