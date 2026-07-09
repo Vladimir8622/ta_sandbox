@@ -23,6 +23,7 @@ class Broker:
             pass
 
         return new_state
+    
     def check_position(self, current_state, data):
         new_state = current_state.copy()
         last_price = data['close'].to_list()[-1]
@@ -45,8 +46,9 @@ class Broker:
                 elif last_price < take_profit:
                     positions.remove(position) 
                     new_state.balance += position.volume * (1 + self.commissions + self.slippage)
-
-        return 
+            else: 
+                pass
+        return new_state
 
 
      

@@ -25,9 +25,9 @@ States = []
 
 for i in range(Start, End):
     response = strategy.make(data[:i])
-    current_state = data['current_state']
-    new_state = broker.check_response()
-    broker.check_position
-    states.append(new_state)
+    current_state = data['current_state'].iloc[-1]
+    new_state = broker.check_response(current_state, response)
+    new_state = broker.check_position(current_state, data)
+    States.append(new_state)
 
 # analysis
