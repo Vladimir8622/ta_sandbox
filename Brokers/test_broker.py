@@ -25,9 +25,9 @@ class test_broker(Basic_Broker):
         last_price = data['close'].to_list()[-1]
         positions = current_state.positions
         for position in positions:
-            current_direction = current_state.postions(position).direction
-            stop_loss = current_state.postions(position).stop_loss
-            take_profit = current_state.postions(position).take_profit
+            current_direction = position.direction
+            stop_loss = position.stop_loss
+            take_profit = position.take_profit
             if current_direction == 1:
                 if last_price < stop_loss:
                     positions.remove(position) 
