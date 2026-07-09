@@ -7,24 +7,24 @@ class test_broker(Basic_Broker):
 
     def check_response(self,current_state,response):
         new_state = current_state.copy()
-
-        if response.direction == 1:
-            position = Position(1,new_state.balance,response.entry_price, response.take_profit, response.stop_loss)
-            new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
-            new_state.positions.append(position)
-        elif response.direction == -1:
-            position = Position(-1,new_state.balance,response.entry_price, response.take_profit, response.stop_loss)
-            new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
-            new_state.positions.append(position)
-        else:
-            pass
+        if current_state.positions == []:
+            if response.direction == 1:
+                position = Position(1,new_state.balance,response.entry_price,take_profit =  response.take_profit,stop_loss =  response.stop_loss)
+                new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
+                new_state.positions.append(position)
+            elif response.direction == -1:
+                position = Position(-1,new_state.balance,response.entry_price,take_profit = response.take_profit, stop_loss = response.stop_loss)
+                new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
+                new_state.positions.append(position)
+            else:
+                pass
 
         return new_state
     def check_position(self, current_state, data):
         new_state = current_state.copy()
         last_price = data['close'].to_list()[-1]
         positions = current_state.positions
-        for position in positions:
+        for position in positions[:]:
             current_direction = position.direction
             stop_loss = position.stop_loss
             take_profit = position.take_profit
@@ -38,4 +38,5 @@ class test_broker(Basic_Broker):
                     new_state.balance += position.amount * last_price * (1 - self.commissions - self.slippage)
             else: 
                 pass
+        new_state.positions = positions
         return new_state

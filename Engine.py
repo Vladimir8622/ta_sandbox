@@ -25,11 +25,15 @@ data['current_state'] = [State()]* len(data)
 
 
 for i in range(ma_slow+1, len(data)):
-    response = strategy.make_decision(data[:i])
-    current_state = data['current_state'].iloc[-1]
+    response = strategy.make_decision(data[:i+1])
+    current_state = data['current_state'].iloc[i-1]
+
     new_state = broker.check_response(current_state, response)
-    new_state = broker.check_position(current_state, data)
+    new_state = broker.check_position(new_state, data[:i+1])
     data.loc[i, 'current_state'] = new_state
     States.append(new_state)
+
+    print('new state')
     print(new_state.balance)
+    print(new_state.positions)
 
