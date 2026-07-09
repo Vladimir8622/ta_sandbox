@@ -1,6 +1,3 @@
-import pandas as pd
-import Response
-import State
 import Position
 
 class Broker:
@@ -26,5 +23,30 @@ class Broker:
             pass
 
         return new_state
-    
+    def check_position(self, current_state, data):
+        new_state = current_state.copy()
+        last_price = data['close'].to_list()[-1]
+        positions = current_state.postions()
+        for position in positions:
+            current_direction = current_state.postions(position).direction
+            stop_loss = current_state.postions(position).stop_loss
+            take_profit = current_state.postions(position).take_profit
+            if current_direction == 1:
+                if last_price < stop_loss:
+                    positions.remove(position) 
+                    new_state.balance -= position.volume * (1 + self.commissions + self.slippage)
+                elif last_price > take_profit:
+                    positions.remove(position) 
+                    new_state.balance += position.volume * (1 + self.commissions + self.slippage)
+            elif current_direction == -1:
+                if last_price > stop_loss:
+                    positions.remove(position) 
+                    new_state.balance -= position.volume * (1 + self.commissions + self.slippage)
+                elif last_price < take_profit:
+                    positions.remove(position) 
+                    new_state.balance += position.volume * (1 + self.commissions + self.slippage)
+
+        return 
+
+
      
