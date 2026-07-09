@@ -29,19 +29,13 @@ class test_broker(Basic_Broker):
             stop_loss = position.stop_loss
             take_profit = position.take_profit
             if current_direction == 1:
-                if last_price < stop_loss:
+                if last_price < stop_loss or last_price > take_profit:
                     positions.remove(position) 
-                    new_state.balance -= position.volume * (1 + self.commissions + self.slippage)
-                elif last_price > take_profit:
-                    positions.remove(position) 
-                    new_state.balance += position.volume * (1 + self.commissions + self.slippage)
+                    new_state.balance += position.amount * last_price * (1 - self.commissions - self.slippage)
             elif current_direction == -1:
-                if last_price > stop_loss:
+                if last_price > stop_loss or last_price < take_profit:
                     positions.remove(position) 
-                    new_state.balance -= position.volume * (1 + self.commissions + self.slippage)
-                elif last_price < take_profit:
-                    positions.remove(position) 
-                    new_state.balance += position.volume * (1 + self.commissions + self.slippage)
+                    new_state.balance += position.amount * last_price * (1 - self.commissions - self.slippage)
             else: 
                 pass
         return new_state
