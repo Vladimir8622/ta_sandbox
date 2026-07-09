@@ -1,11 +1,8 @@
-import pandas as pd
-import Response
-import State
-import Position
+from abc import ABC, abstractmethod
+from Responses.Basic_Response import Response
 
-class Basic_Strategy:
-    def __init__(self):
-        pass
-
+class Basic_Strategy(ABC):
+    
+    @abstractmethod
     def make_decision(self, data) -> Response:
         pass
