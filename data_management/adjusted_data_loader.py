@@ -74,13 +74,16 @@ for ticker in names:
     try:
         resp = session.get(url, params=params, timeout=30)
         resp.raise_for_status()
-        
+        resp = resp.text
+        splited_resp = (resp.split('\n'))
+        splited_resp[0] = 'begin,close'
+        resp = '\n'.join(splited_resp)
         # Сохраняем полученный CSV в файл
         file_path = f"data/MOEX/adjusted_stock/1d/{ticker}.csv"
         if os.path.exists(file_path):
             continue
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(resp.text)
+            f.write(resp)
         
         print(f"✅ Загружено: {ticker}")
     except Exception as e:
