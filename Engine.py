@@ -1,5 +1,6 @@
 import Data_manager as dm
 
+# Пока хардкодим. должно сообщаться оптимизатором при запуске скрипта
 param = 0
 
 manager = dm.Data_manager()
