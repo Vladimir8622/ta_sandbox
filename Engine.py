@@ -60,16 +60,65 @@ for i in range(min_length, len(data)):
     new_state = broker.check_position(new_state, data[:i+1])
     data.loc[i, 'current_state'] = new_state
     States.append(new_state)
+
+    print('new state',file=sys.stderr)
+    print(new_state.balance,file=sys.stderr)
+    print(new_state.positions,file=sys.stderr)
+
+
+
+
+def calculate_metrics(states):
+    if not states:
+        return {
+            "total_return": 0,
+            "sharp_ratio": 0,
+            "max_drawdown": 0
+        }
     
-    print('new state')
-    print(new_state.balance)
-    print(new_state.positions)
+    balances = [state.balance for state in states]
+    
+    initial_balance = balances[0] if balances else 1
+    final_balance = balances[-1] if balances else 1
+    total_return = final_balance / initial_balance  
+    
+
+    max_drawdown = 0
+    peak = balances[0] if balances else 1
+    
+    for balance in balances:
+        if balance > peak:
+            peak = balance
+        drawdown = (peak - balance) / peak * 100 if peak > 0 else 0
+        if drawdown > max_drawdown:
+            max_drawdown = drawdown
+    
+
+    # Рассчитываем дневные доходности
+    returns = []
+    for i in range(1, len(balances)):
+        if balances[i-1] != 0:
+            daily_return = (balances[i] - balances[i-1]) / balances[i-1]
+            returns.append(daily_return)
+    
+    if returns:
+        avg_return = sum(returns) / len(returns)
+        variance = sum((r - avg_return) ** 2 for r in returns) / len(returns)
+        std_dev = variance ** 0.5
+
+        if std_dev > 0:
+            sharp_ratio = (avg_return / std_dev) 
+        else:
+            sharp_ratio = 0
+    else:
+        sharp_ratio = 0
+    
+    return {
+        "total_return": total_return,
+        "sharp_ratio": sharp_ratio,
+        "max_drawdown": max_drawdown
+    }
 
 
-metrics = {
-    "total_return": 12,
-    "sharp_ratio": 32,
-    "max_drawdown": 1
-}
 
-print(json.dumps(metrics))
+print(json.dumps(calculate_metrics(States)))
