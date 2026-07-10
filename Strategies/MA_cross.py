@@ -32,10 +32,10 @@ class MA_cross(Basic_Strategy):
     @staticmethod
     def get_strategy_params():
         return [
-            {'name': 'long_period', 'type': 'int', 'min': 1, 'max': 100},
-            {'name': 'short_period', 'type': 'int', 'min': 1, 'max': 100},
-            {'name': 'take_profit_percent', 'type': 'float', 'min': 1, 'max': 10},
-            {'name': 'stop_loss_percent', 'type': 'float', 'min': 0.5, 'max': 1},
+            {'name': 'long_period', 'type': 'int', 'min': 50, 'max': 500},
+            {'name': 'short_period', 'type': 'int', 'min': 5, 'max': 45},
+            {'name': 'take_profit_percent', 'type': 'float', 'min': 1, 'max': 100},
+            {'name': 'stop_loss_percent', 'type': 'float', 'min': 1, 'max': 100},
         ]
 
     def get_min_data_length(self):
@@ -58,6 +58,6 @@ class MA_cross(Basic_Strategy):
         if delta_last > 0 and delta_prev < 0:
             balance = data_to_process['current_state'].iloc[-1].balance
             price = data_to_process['close'].iloc[-1]
-            return Open_Position(1,balance,price, take_profit = price*self.take_profit_percent, stop_loss = price *self.stop_loss_percent)
+            return Open_Position(1,balance,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price *(1-self.stop_loss_percent))
         else:
             return Open_Position(0,0,0, 0, 0)

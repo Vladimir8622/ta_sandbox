@@ -46,6 +46,8 @@ slippage = params['slippage']
 broker = test_broker(commissions=commissions, slippage=slippage)
 
 States = []
+balances_history = []
+
 data['current_state'] = [State()]* len(data)  
 
 # Узнаем сколько надо для стратегии на разогрев
@@ -60,6 +62,8 @@ for i in range(min_length, len(data)):
     new_state = broker.check_position(new_state, data[:i+1])
     data.loc[i, 'current_state'] = new_state
     States.append(new_state)
+    balances_history.append(new_state.balance)
+
 
     print('new state',file=sys.stderr)
     print(new_state.balance,file=sys.stderr)
@@ -68,7 +72,7 @@ for i in range(min_length, len(data)):
 
 
 
-def calculate_metrics(states):
+def calculate_metrics(states, balances_history):
     if not states:
         return {
             "total_return": 0,
@@ -82,7 +86,6 @@ def calculate_metrics(states):
     final_balance = balances[-1] if balances else 1
     total_return = final_balance / initial_balance  
     
-
     max_drawdown = 0
     peak = balances[0] if balances else 1
     
@@ -93,8 +96,6 @@ def calculate_metrics(states):
         if drawdown > max_drawdown:
             max_drawdown = drawdown
     
-
-    # Рассчитываем дневные доходности
     returns = []
     for i in range(1, len(balances)):
         if balances[i-1] != 0:
@@ -113,12 +114,16 @@ def calculate_metrics(states):
     else:
         sharp_ratio = 0
     
-    return {
+    result = {
         "total_return": total_return,
         "sharp_ratio": sharp_ratio,
         "max_drawdown": max_drawdown
     }
+    
+    if balances_history is not None:
+        result["balances"] = balances_history
+    
+    return result
 
+print(json.dumps(calculate_metrics(States, balances_history)))
 
-
-print(json.dumps(calculate_metrics(States)))
