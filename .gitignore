@@ -1,2 +1,7 @@
 data
 __pycache__/
+Brokers\__pycache__
+data_management\__pycache__
+Responses\__pycache__
+Strategies\__pycache__
+test.py

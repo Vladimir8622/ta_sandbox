@@ -3,11 +3,44 @@ from Responses.Open_Position import Open_Position
 
 
 class MA_cross(Basic_Strategy):
-    def __init__(self, long_period,short_period):
+    def __init__(self, long_period,short_period,take_profit_percent,stop_loss_percent):
         super().__init__()
         self.long_period = long_period
         self.short_period = short_period
+        self.take_profit_percent = take_profit_percent
+        self.stop_loss_percent = stop_loss_percent
+
     
+    @staticmethod
+    def get_data_params():
+        Market = "MOEX"
+        Active = "adjusted_stock"
+        Timeframe = "1d"
+        Name = "ABIO.MOEX"
+        Start = "2023-08-18"
+        End = "2026-07-08"
+        data_params = {
+            'Market': Market,
+            'Active': Active,
+            'Timeframe': Timeframe,
+            'Name': Name,
+            'Start': Start,
+            'End': End
+        }
+        return data_params
+    
+    @staticmethod
+    def get_strategy_params():
+        return [
+            {'name': 'ma_slow', 'type': 'int', 'min': 1, 'max': 100},
+            {'name': 'ma_fast', 'type': 'int', 'min': 1, 'max': 100},
+            {'name': 'take_profit_percent', 'type': 'float', 'min': 1, 'max': 10},
+            {'name': 'stop_loss_percent', 'type': 'float', 'min': 0.5, 'max': 1},
+        ]
+
+    def get_min_data_length(self):
+        return max(self.long_period, self.short_period) + 1
+
     def make_decision(self, data):
         data_to_process = data.copy()
         # calculating MA
@@ -25,6 +58,6 @@ class MA_cross(Basic_Strategy):
         if delta_last > 0 and delta_prev < 0:
             balance = data_to_process['current_state'].iloc[-1].balance
             price = data_to_process['close'].iloc[-1]
-            return Open_Position(1,balance,price, take_profit = price*1.1, stop_loss = price *0.9)
+            return Open_Position(1,balance,price, take_profit = price*self.take_profit_percent, stop_loss = price *self.stop_loss_percent)
         else:
             return Open_Position(0,0,0, 0, 0)
