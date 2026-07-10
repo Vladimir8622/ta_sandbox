@@ -34,8 +34,8 @@ class MA_cross(Basic_Strategy):
         return [
             {'name': 'long_period', 'type': 'int', 'min': 50, 'max': 500},
             {'name': 'short_period', 'type': 'int', 'min': 5, 'max': 45},
-            {'name': 'take_profit_percent', 'type': 'float', 'min': 1, 'max': 100},
-            {'name': 'stop_loss_percent', 'type': 'float', 'min': 1, 'max': 100},
+            {'name': 'take_profit_percent', 'type': 'float', 'min': 0.001, 'max': 1},
+            {'name': 'stop_loss_percent', 'type': 'float', 'min': 0.001, 'max': 1},
         ]
 
     def get_min_data_length(self):
