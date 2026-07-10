@@ -108,7 +108,7 @@ def merge_5min(out_folder):
 
 if __name__ == '__main__':
     # Подгрузка конфигурации запуска
-    with open('config.yaml', 'r', encoding='utf-8') as f:
+    with open('data_management/config.yaml', 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
     # Проверка необходимости запускать скрипт
     if config['merge']['enabled']:
