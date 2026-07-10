@@ -66,6 +66,36 @@ study = optuna.create_study(directions=['maximize','maximize','minimize'])
 my_objective = partial(objective, data_params = data_params, brokers_params = brokers_params, strategy_params = strategy_params, strategy_info = strategy_info)
 study.optimize(my_objective, n_trials=100)
 
-best_params = study.best_params
-with open('best_params.json', 'w') as f:
-    json.dump(best_params, f, indent=4)
+
+successful_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE and t.values is not None]
+
+if successful_trials:
+    best_params = {
+        'best_by_return': {
+            'params': max(successful_trials, key=lambda t: t.values[0]).params,
+            'metrics': {
+                'total_return': max(successful_trials, key=lambda t: t.values[0]).values[0],
+                'sharp_ratio': max(successful_trials, key=lambda t: t.values[0]).values[1],
+                'max_drawdown': max(successful_trials, key=lambda t: t.values[0]).values[2]
+            }
+        },
+        'best_by_sharpe': {
+            'params': max(successful_trials, key=lambda t: t.values[1]).params,
+            'metrics': {
+                'total_return': max(successful_trials, key=lambda t: t.values[1]).values[0],
+                'sharp_ratio': max(successful_trials, key=lambda t: t.values[1]).values[1],
+                'max_drawdown': max(successful_trials, key=lambda t: t.values[1]).values[2]
+            }
+        },
+        'best_by_drawdown': {
+            'params': min(successful_trials, key=lambda t: t.values[2]).params,
+            'metrics': {
+                'total_return': min(successful_trials, key=lambda t: t.values[2]).values[0],
+                'sharp_ratio': min(successful_trials, key=lambda t: t.values[2]).values[1],
+                'max_drawdown': min(successful_trials, key=lambda t: t.values[2]).values[2]
+            }
+        }
+    }
+    
+    with open('best_params.json', 'w') as f:
+        json.dump(best_params, f, indent=4)
