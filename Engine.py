@@ -61,9 +61,9 @@ for i in range(min_length, len(data)):
     data.loc[i, 'current_state'] = new_state
     States.append(new_state)
 
-    print('new state')
-    print(new_state.balance)
-    print(new_state.positions)
+    print('new state',file=sys.stderr)
+    print(new_state.balance,file=sys.stderr)
+    print(new_state.positions,file=sys.stderr)
 
 metrics = {
     "total_return": 12,

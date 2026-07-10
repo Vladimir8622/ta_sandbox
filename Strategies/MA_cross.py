@@ -32,8 +32,8 @@ class MA_cross(Basic_Strategy):
     @staticmethod
     def get_strategy_params():
         return [
-            {'name': 'ma_slow', 'type': 'int', 'min': 1, 'max': 100},
-            {'name': 'ma_fast', 'type': 'int', 'min': 1, 'max': 100},
+            {'name': 'long_period', 'type': 'int', 'min': 1, 'max': 100},
+            {'name': 'short_period', 'type': 'int', 'min': 1, 'max': 100},
             {'name': 'take_profit_percent', 'type': 'float', 'min': 1, 'max': 10},
             {'name': 'stop_loss_percent', 'type': 'float', 'min': 0.5, 'max': 1},
         ]
