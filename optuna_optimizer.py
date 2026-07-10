@@ -65,3 +65,7 @@ def objective(trial,data_params,brokers_params,strategy_params, strategy_info):
 study = optuna.create_study(directions=['maximize','maximize','minimize'])
 my_objective = partial(objective, data_params = data_params, brokers_params = brokers_params, strategy_params = strategy_params, strategy_info = strategy_info)
 study.optimize(my_objective, n_trials=100)
+
+best_params = study.best_params
+with open('best_params.json', 'w') as f:
+    json.dump(best_params, f, indent=4)
