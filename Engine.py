@@ -46,7 +46,7 @@ slippage = params['slippage']
 broker = test_broker(commissions=commissions, slippage=slippage)
 
 States = []
-balances_history = []
+
 
 data['current_state'] = [State()]* len(data)  
 
@@ -62,17 +62,12 @@ for i in range(min_length, len(data)):
     new_state = broker.check_position(new_state, data[:i+1])
     data.loc[i, 'current_state'] = new_state
     States.append(new_state)
-    balances_history.append(new_state.balance)
-
-
-    print('new state',file=sys.stderr)
-    print(new_state.balance,file=sys.stderr)
-    print(new_state.positions,file=sys.stderr)
 
 
 
 
-def calculate_metrics(states, balances_history):
+
+def calculate_metrics(states):
     if not states:
         return {
             "total_return": 0,
@@ -120,10 +115,12 @@ def calculate_metrics(states, balances_history):
         "max_drawdown": max_drawdown
     }
     
-    if balances_history is not None:
-        result["balances"] = balances_history
+    if balances is not None:
+        result["balances"] = balances
+    # if positions_history is not None:
+    #     result["positions"] = positions_history
     
     return result
 
-print(json.dumps(calculate_metrics(States, balances_history)))
+print(json.dumps(calculate_metrics(States)))
 

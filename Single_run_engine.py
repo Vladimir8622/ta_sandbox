@@ -12,10 +12,10 @@ params = {
     "slippage": 0.00001,         
     "path": "Strategies/MA_cross.py", 
     "name": "MA_cross",           
-    "short_period": 10,  
-    "long_period": 15,
-    "take_profit_percent": 10.0,    
-    "stop_loss_percent": 50.0      
+    "short_period": 8,  
+    "long_period": 198,
+    "take_profit_percent":0.08073178111406797,    
+    "stop_loss_percent": 0.27729899494779076      
 }
 
 command = ['python', 'Engine.py', '--params', json.dumps(params)]
@@ -27,7 +27,7 @@ if result.returncode == 0:
     print(f"  Total Return: {output['total_return']:.4f}")
     print(f"  Sharpe Ratio: {output['sharp_ratio']:.4f}")
     print(f"  Max Drawdown: {output['max_drawdown']:.2f}%")
-    
+    # print(output['positions_history'])
     if 'balances' in output:
         import matplotlib.pyplot as plt
         plt.plot(output['balances'])
