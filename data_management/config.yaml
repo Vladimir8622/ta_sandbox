@@ -1,9 +1,9 @@
 # Общие параметры
 general:
   data_folder: "data/MOEX/futures/1m/"
-  continuous_folder: "continous"
-  summary_of_merging_folder: "merge_summary"
-  summary_of_loading_folder: "load_summary"
+  continuous_folder: "data/processed_data/merged_futures/1m/continous"
+  summary_of_merging_folder: "data/processed_data/merged_futures/1m/merge_summary"
+  summary_of_loading_folder: "data/processed_data/merged_futures/1m/load_summary"
   
   years: [2026]
   # months: ["F","G","H","J","K","M","N","Q","U","V","X","Z"]
@@ -26,7 +26,7 @@ summary:
 
 # Параметры для этапа слияния (moex_futures_merge.py)
 merge:
-  enabled: false
+  enabled: true
 
   output_suffixes: ["_1min.csv", "_5min.csv"]
   force_recreate: false       

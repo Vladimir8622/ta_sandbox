@@ -14,8 +14,8 @@ if __name__ == '__main__':
     # Часть скриптов может не запуситься из-за настроек конфига
     scripts = [
         'data_management/moex_futures_data_loader.py',
-        'load_summary.py', 
-        'moex_futures_merge.py'
+        # 'load_summary.py', 
+        'data_management/moex_futures_merge.py'
     ]
     
     for script in scripts:
