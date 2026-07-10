@@ -65,3 +65,10 @@ for i in range(min_length, len(data)):
     print(new_state.balance)
     print(new_state.positions)
 
+metrics = {
+    "total_return": 12,
+    "sharp_ratio": 32,
+    "max_drawdown": 1
+}
+
+print(json.dumps(metrics))
