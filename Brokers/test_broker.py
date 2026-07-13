@@ -12,11 +12,11 @@ class test_broker(Basic_Broker):
         if current_state.positions == []:
             if type(response) != type(Wait()):
                 if response.direction == 1:
-                    position = Position(1,new_state.balance,response.entry_price,take_profit =  response.take_profit,stop_loss =  response.stop_loss)
+                    position = Position(1,response.volume,response.entry_price,take_profit =  response.take_profit,stop_loss =  response.stop_loss)
                     new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
                     new_state.positions.append(position)
                 elif response.direction == -1:
-                    position = Position(-1,new_state.balance,response.entry_price,take_profit = response.take_profit, stop_loss = response.stop_loss)
+                    position = Position(-1,response.volume,response.entry_price,take_profit = response.take_profit, stop_loss = response.stop_loss)
                     new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
                     new_state.positions.append(position)
                 else:
