@@ -6,3 +6,5 @@ Responses\__pycache__
 Strategies\__pycache__
 test.py
 best_params.json
+equity.png
+trades_log.csv
