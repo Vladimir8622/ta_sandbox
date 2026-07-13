@@ -8,3 +8,5 @@
 8. compare portfolio with snp 
 9. rewrite MA_cross to numpy
 10. make current optim work on gold
+
+3 6 8 9 10

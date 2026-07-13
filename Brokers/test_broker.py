@@ -1,5 +1,7 @@
 from Brokers.Basic_Broker import Basic_Broker
 from Position import Position
+from Responses.Wait import Wait
+
 class test_broker(Basic_Broker):
     def __init__(self, commissions, slippage):
         self.commissions = commissions
@@ -8,14 +10,17 @@ class test_broker(Basic_Broker):
     def check_response(self,current_state,response):
         new_state = current_state.copy()
         if current_state.positions == []:
-            if response.direction == 1:
-                position = Position(1,new_state.balance,response.entry_price,take_profit =  response.take_profit,stop_loss =  response.stop_loss)
-                new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
-                new_state.positions.append(position)
-            elif response.direction == -1:
-                position = Position(-1,new_state.balance,response.entry_price,take_profit = response.take_profit, stop_loss = response.stop_loss)
-                new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
-                new_state.positions.append(position)
+            if type(response) != type(Wait()):
+                if response.direction == 1:
+                    position = Position(1,new_state.balance,response.entry_price,take_profit =  response.take_profit,stop_loss =  response.stop_loss)
+                    new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
+                    new_state.positions.append(position)
+                elif response.direction == -1:
+                    position = Position(-1,new_state.balance,response.entry_price,take_profit = response.take_profit, stop_loss = response.stop_loss)
+                    new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
+                    new_state.positions.append(position)
+                else:
+                    raise ValueError('Неправильно заданый ответ стратегии')
             else:
                 pass
 

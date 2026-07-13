@@ -1,14 +1,21 @@
 import data_management.Data_manager as dm
-from Strategies.MA_cross import MA_cross 
 from Brokers.test_broker import test_broker
+from Responses.Wait import Wait
 from State import State
 import argparse
 import json
+import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--params', type=str, required=True)
+parser.add_argument('--logs', action='store_true')
 args = parser.parse_args()
 params = json.loads(args.params)
+
+# Включаем логгирование для проверку результатов оптимизации
+if args.logs:
+    print('Переходим в режим логгирования')
+    logs = []
 
 #Загрузка даты
 Market = params['Market']
@@ -45,8 +52,8 @@ commissions = params['commissions']
 slippage = params['slippage']
 broker = test_broker(commissions=commissions, slippage=slippage)
 
-States = []
 
+States = []
 
 data['current_state'] = [State()]* len(data)  
 
@@ -63,8 +70,14 @@ for i in range(min_length, len(data)):
     data.loc[i, 'current_state'] = new_state
     States.append(new_state)
 
-
-
+    if args.logs:
+        current_line = {
+            'datetime':data['begin'][i],
+            'balance':current_state.balance,
+            'decision':response,
+            'positions':current_state.positions
+        }
+        logs.append(current_line)
 
 
 def calculate_metrics(states):
@@ -114,13 +127,12 @@ def calculate_metrics(states):
         "sharp_ratio": sharp_ratio,
         "max_drawdown": max_drawdown
     }
-    
-    if balances is not None:
-        result["balances"] = balances
-    # if positions_history is not None:
-    #     result["positions"] = positions_history
-    
+
     return result
+result = calculate_metrics(States)
 
-print(json.dumps(calculate_metrics(States)))
+if args.logs:
+    # logs = pd.DataFrame(logs)
+    result['logs'] = logs
 
+print(json.dumps(result, default=str))
