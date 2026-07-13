@@ -1,5 +1,6 @@
 import data_management.Data_manager as dm
 from Brokers.test_broker import test_broker
+from Responses.Open_Position import Open_Position
 from Responses.Wait import Wait
 from State import State
 import argparse
@@ -56,7 +57,7 @@ broker = test_broker(commissions=commissions, slippage=slippage)
 
 States = []
 
-data['current_state'] = [State()]* len(data)  
+data['current_state'] = [State(100)]* len(data)  
 
 # Узнаем сколько надо для стратегии на разогрев
 
@@ -68,7 +69,7 @@ for i in range(min_length, len(data)):
 
     new_state = broker.check_response(current_state, response)
     new_state = broker.check_position(new_state, data[:i+1])
-    data.loc[i, 'current_state'] = new_state
+    data.iloc[i, data.columns.get_loc('current_state')] = new_state
     States.append(new_state)
 
     if args.logs:
@@ -86,7 +87,7 @@ for i in range(min_length, len(data)):
             }
         # Преобразуем positions в список словарей
         positions_list = []
-        for pos in current_state.positions:
+        for pos in new_state.positions:
             positions_list.append({
                 'direction': pos.direction,
                 'volume': pos.volume,
@@ -96,8 +97,8 @@ for i in range(min_length, len(data)):
                 'amount': pos.amount
             })
         current_line = {
-            'datetime': data['begin'][i],
-            'balance': current_state.balance,
+            'datetime': data['begin'].iloc[i],
+            'balance': new_state.balance,
             'decision': decision_dict,
             'positions': positions_list
         }
