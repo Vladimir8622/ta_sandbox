@@ -1,5 +1,6 @@
 from Strategies.Basic_Strategy import Basic_Strategy
 from Responses.Open_Position import Open_Position
+from Responses.Wait import Wait
 
 
 class MA_cross(Basic_Strategy):
@@ -60,4 +61,4 @@ class MA_cross(Basic_Strategy):
             price = data_to_process['close'].iloc[-1]
             return Open_Position(1,balance,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price *(1-self.stop_loss_percent))
         else:
-            return Open_Position(0,0,0, 0, 0)
+            return Wait()
