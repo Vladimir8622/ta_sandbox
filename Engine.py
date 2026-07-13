@@ -5,6 +5,7 @@ from State import State
 import argparse
 import json
 import pandas as pd
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--params', type=str, required=True)
@@ -14,7 +15,7 @@ params = json.loads(args.params)
 
 # Включаем логгирование для проверку результатов оптимизации
 if args.logs:
-    print('Переходим в режим логгирования')
+    print('Переходим в режим логгирования',file=sys.stderr)
     logs = []
 
 #Загрузка даты
@@ -71,11 +72,34 @@ for i in range(min_length, len(data)):
     States.append(new_state)
 
     if args.logs:
+        # Преобразуем response в словарь
+        if isinstance(response, Wait):
+            decision_dict = {'type': 'Wait'}
+        else:
+            decision_dict = {
+                'type': 'Open_Position',
+                'direction': response.direction,
+                'volume': response.volume,
+                'entry_price': response.entry_price,
+                'take_profit': response.take_profit,
+                'stop_loss': response.stop_loss
+            }
+        # Преобразуем positions в список словарей
+        positions_list = []
+        for pos in current_state.positions:
+            positions_list.append({
+                'direction': pos.direction,
+                'volume': pos.volume,
+                'entry_price': pos.entry_price,
+                'take_profit': pos.take_profit,
+                'stop_loss': pos.stop_loss,
+                'amount': pos.amount
+            })
         current_line = {
-            'datetime':data['begin'][i],
-            'balance':current_state.balance,
-            'decision':response,
-            'positions':current_state.positions
+            'datetime': data['begin'][i],
+            'balance': current_state.balance,
+            'decision': decision_dict,
+            'positions': positions_list
         }
         logs.append(current_line)
 
