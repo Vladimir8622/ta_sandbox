@@ -1,9 +1,37 @@
+import numpy as np
+from numba import njit
+
 from Strategies.Basic_Strategy import Basic_Strategy
 from Responses.Open_Position import Open_Position
 from Responses.Wait import Wait
 
 
+@njit(cache=True)
+def _last_two_ma_deltas(close, long_period, short_period):
+
+    n = close.shape[0]
+
+    long_sum = 0.0
+    for i in range(n - long_period, n):
+        long_sum += close[i]
+    long_ma_last = long_sum / long_period
+    long_sum_prev = long_sum - close[n - 1] + close[n - 1 - long_period]
+    long_ma_prev = long_sum_prev / long_period
+
+    short_sum = 0.0
+    for i in range(n - short_period, n):
+        short_sum += close[i]
+    short_ma_last = short_sum / short_period
+    short_sum_prev = short_sum - close[n - 1] + close[n - 1 - short_period]
+    short_ma_prev = short_sum_prev / short_period
+
+    delta_last = long_ma_last - short_ma_last
+    delta_prev = long_ma_prev - short_ma_prev
+    return delta_last, delta_prev
+
+
 class MA_cross(Basic_Strategy):
+
     def __init__(self, long_period,short_period,take_profit_percent,stop_loss_percent):
         super().__init__()
         self.long_period = long_period
@@ -43,26 +71,19 @@ class MA_cross(Basic_Strategy):
         return max(self.long_period, self.short_period) + 1
 
     def make_decision(self, data):
-        data_to_process = data.copy()
-        # calculating MA
-        data_to_process['long_MA'] = data_to_process['close'].rolling(window=self.long_period).mean()
-        data_to_process['short_MA'] = data_to_process['close'].rolling(window=self.short_period).mean()
-        data_to_process['delta'] = data_to_process['long_MA'] - data_to_process['short_MA']
-        
-        data_to_process = data_to_process.dropna(subset=['delta'])
 
-        # Берём два последних значения (индексы -1 и -2)
-        delta_last = data_to_process['delta'].iloc[-1]
-        delta_prev = data_to_process['delta'].iloc[-2]
+        need = max(self.long_period, self.short_period) + 1
+        close_tail = data['close'].iloc[-need:].to_numpy(dtype=np.float64)
 
+        delta_last, delta_prev = _last_two_ma_deltas(close_tail, self.long_period, self.short_period)
 
         if delta_last > 0 and delta_prev < 0:
-            balance = data_to_process['current_state'].iloc[-1].balance
-            price = data_to_process['close'].iloc[-1]
+            balance = data['current_state'].iloc[-2].balance
+            price = data['close'].iloc[-2]
             return Open_Position(1,balance,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price *(1-self.stop_loss_percent))
         elif delta_last < 0 and delta_prev > 0:
-            balance = data_to_process['current_state'].iloc[-1].balance
-            price = data_to_process['close'].iloc[-1]
+            balance = data['current_state'].iloc[-2].balance
+            price = data['close'].iloc[-2]
             return Open_Position(-1,balance,price, take_profit = price*(1-self.take_profit_percent), stop_loss = price *(1+self.stop_loss_percent))
         else:
             return Wait()

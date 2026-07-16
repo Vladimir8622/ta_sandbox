@@ -10,15 +10,15 @@ params = {
     "Timeframe": "1d",            
     "Name": "GD_5min",         
     "Start": "2024-08-01",        
-    "End": "2024-12-01",          
-    "commissions": 0.01,       
+    "End": "2025-12-01",          
+    "commissions": 0.0001,       
     "slippage": 0.0,         
     "path": "Strategies/MA_cross.py", 
     "name": "MA_cross",           
     "short_period": 8,  
     "long_period": 10,
     "take_profit_percent":0.01,    
-    "stop_loss_percent": 0.1  
+    "stop_loss_percent": 0.01  
 }
 
 command = ['python', 'Engine.py', '--params', json.dumps(params), '--logs']
