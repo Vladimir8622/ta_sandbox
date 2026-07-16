@@ -57,7 +57,7 @@ broker = test_broker(commissions=commissions, slippage=slippage)
 
 States = []
 
-data['current_state'] = [State(100)]* len(data)  
+data['current_state'] = [State(1)]* len(data)  
 
 # Узнаем сколько надо для стратегии на разогрев
 
