@@ -45,10 +45,10 @@ class Test_strategy(Basic_Strategy):
         if value == -1:
             balance = data_to_process['current_state'].iloc[-1].balance
             price = data_to_process['close'].iloc[-1]
-            return Open_Position(-1,1,price, take_profit = price*(1-self.take_profit_percent), stop_loss = price *(1+self.stop_loss_percent))
+            return Open_Position(-1,1,price, take_profit = price*(1-self.take_profit_percent), stop_loss = price*(1+self.stop_loss_percent))
         elif value == 1:
             balance = data_to_process['current_state'].iloc[-1].balance
             price = data_to_process['close'].iloc[-1]
-            return Open_Position(1,1,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price *(1-self.stop_loss_percent))
+            return Open_Position(1,1,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price*(1-self.stop_loss_percent))
         else:
             return Wait()

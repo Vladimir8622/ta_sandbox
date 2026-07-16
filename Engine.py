@@ -56,8 +56,7 @@ broker = test_broker(commissions=commissions, slippage=slippage)
 
 States = []
 
-data['current_state'] = [State()]* len(data)  
-
+data['current_state'] = [State() for _ in range(len(data))]
 # Узнаем сколько надо для стратегии на разогрев
 
 min_length = strategy.get_min_data_length()
@@ -86,7 +85,7 @@ for i in range(min_length, len(data)):
             }
         # Преобразуем positions в список словарей
         positions_list = []
-        for pos in current_state.positions:
+        for pos in new_state.positions:
             positions_list.append({
                 'direction': pos.direction,
                 'volume': pos.volume,
@@ -97,7 +96,7 @@ for i in range(min_length, len(data)):
             })
         current_line = {
             'datetime': data['begin'][i],
-            'balance': current_state.balance,
+            'balance': new_state.balance,
             'decision': decision_dict,
             'positions': positions_list
         }
