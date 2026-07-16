@@ -8,17 +8,17 @@ params = {
     "Market": "MOEX",          
     "Active": "adjusted_stock",          
     "Timeframe": "1d",            
-    "Name": "GD_5min",         
+    "Name": "ABIO.MOEX",         
     "Start": "2024-08-01",        
-    "End": "2024-08-20",          
-    "commissions": 0.7,       
-    "slippage": 0.00001,         
-    "path": "Strategies/Test_strategy.py", 
-    "name": "Test_strategy",           
-    # "short_period": 8,  
-    # "long_period": 198,
-    "take_profit_percent":0.08073178111406797,    
-    "stop_loss_percent": 0.027729899494779076      
+    "End": "2026-12-16",          
+    "commissions": 0.01,       
+    "slippage": 0.0,         
+    "path": "Strategies/MA_cross.py", 
+    "name": "MA_cross",           
+    "short_period": 8,  
+    "long_period": 198,
+    "take_profit_percent":0.001,    
+    "stop_loss_percent": 0.001  
 }
 
 command = ['python', 'Engine.py', '--params', json.dumps(params), '--logs']
