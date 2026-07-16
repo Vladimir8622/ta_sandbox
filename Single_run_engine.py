@@ -5,42 +5,21 @@ import csv
 from datetime import datetime
 import sys
 
-params = {
-    "Market": "MOEX",          
-    "Active": "adjusted_stock",          
-    "Timeframe": "1d",            
-    "Name": "GD_5min",         
-    "Start": "2024-08-01",        
-    "End": "2025-12-01",          
-    "commissions": 0.0001,       
-    "slippage": 0.0,         
-    "path": "Strategies/MA_cross.py", 
-    "name": "MA_cross",           
-    "short_period": 8,  
-    "long_period": 10,
-    "take_profit_percent":0.01,    
-    "stop_loss_percent": 0.01  
-}
-
-
-
 data_params = [{"Market": "MOEX",          
                 "Active": "adjusted_stock",          
                 "Timeframe": "1d",            
-                "Name": "GD_5min",         
+                "Name": "ABIO.MOEX",         
                 "Start": "2024-08-01",        
                 "End": "2025-12-01"}]
 
-brokers_params = {"commissions": 0.0001,       
+brokers_params = {"commissions": 0.1,       
                     "slippage": 0.0}
 
-suggested = {"short_period": 8,  
-            "long_period": 10,
-            "take_profit_percent":0.01,    
+suggested = {"take_profit_percent":0.01,    
             "stop_loss_percent": 0.01  }
 
-strategy_info = {"path": "Strategies/MA_cross.py", 
-                "name": "MA_cross",  }
+strategy_info = {"path": r"Strategies\Test_strategy.py", 
+                "name": "Test_strategy",  }
 
 all_params = {
         'instruments': data_params,
@@ -51,76 +30,79 @@ all_params = {
 
 command = [sys.executable, 'Engine.py', '--params', json.dumps(all_params), '--logs']
 result = subprocess.run(command, capture_output=True, text=True)
-
+print("=== DEBUG ===")
+print("Return code:", result.returncode)
+print("STDOUT:", repr(result.stdout))   # покажет содержимое, даже если пусто
+print("STDERR:", repr(result.stderr))
+print("=== END DEBUG ===")
 if result.returncode == 0:
-    try:
-        output = json.loads(result.stdout)
-    except json.JSONDecodeError as e:
-        print("Ошибка парсинга JSON. Содержимое stdout:")
-        print(result.stdout)
-        raise e
-
-    if 'logs' in output and output['logs']:
-        logs = output['logs']
+    output = json.loads(result.stdout)
+    logs = output.get('logs', [])
+    if logs:
+        # График баланса
         balances = [entry['balance'] for entry in logs]
-        
-        plt.figure(figsize=(12, 6))
-        plt.plot(balances, label='Balance')
+        plt.figure(figsize=(12,6))
+        plt.plot(balances)
         plt.title('Equity Curve')
-        plt.xlabel('Step')
-        plt.ylabel('Balance')
-        plt.grid(True)
-        plt.legend()
         plt.savefig('equity.png')
         plt.show()
 
+        # Определяем сделки по каждому инструменту
         trades = []
-        prev_positions = []   
-        open_trade = None     
+        open_trades = {}  # instrument -> open_trade_info
 
-        for i, entry in enumerate(logs):
-            current_positions = entry['positions']  
-            dt = entry['datetime'] 
-            if not prev_positions and current_positions:
-                pos = current_positions[0]  
-                open_trade = {
-                    'open_time': dt,
-                    'direction': pos['direction'],
-                    'volume': pos['volume'],
-                    'entry_price': pos['entry_price'],
-                    'take_profit': pos['take_profit'],
-                    'stop_loss': pos['stop_loss'],
-                    'open_balance': entry['balance']  
-                }
-            elif prev_positions and not current_positions:
-                if open_trade is not None:
-                    close_balance = entry['balance']
-                    pnl = close_balance - open_trade['open_balance']  
-                    open_trade['close_time'] = dt
-                    open_trade['pnl'] = pnl
-                    trades.append(open_trade)
-                    open_trade = None
+        for entry in logs:
+            dt = entry['datetime']
+            current_positions = entry['positions']  # словарь {instrument: [pos_dict, ...]}
+            balance = entry['balance']
 
-            prev_positions = current_positions
+            # Проверяем, какие инструменты появились или исчезли
+            instruments_with_pos = set(current_positions.keys())
+            for instr in instruments_with_pos:
+                pos_list = current_positions[instr]
+                if pos_list:  # есть хотя бы одна позиция
+                    if instr not in open_trades:
+                        # Открываем сделку (берём первую позицию)
+                        pos = pos_list[0]
+                        open_trades[instr] = {
+                            'instrument': instr,
+                            'open_time': dt,
+                            'direction': pos['direction'],
+                            'volume': pos['volume'],
+                            'entry_price': pos['entry_price'],
+                            'take_profit': pos['take_profit'],
+                            'stop_loss': pos['stop_loss'],
+                            'open_balance': balance
+                        }
+                else:
+                    # Позиций нет – если была открыта, закрываем
+                    if instr in open_trades:
+                        trade = open_trades.pop(instr)
+                        trade['close_time'] = dt
+                        trade['pnl'] = balance - trade['open_balance']
+                        trades.append(trade)
 
-        if open_trade is not None:
-            open_trade['close_time'] = None
-            open_trade['pnl'] = None
-            trades.append(open_trade)
+            # Также нужно обработать инструменты, которые были в open_trades, но отсутствуют в current_positions
+            # (например, если все позиции закрыты)
+            for instr in list(open_trades.keys()):
+                if instr not in instruments_with_pos:
+                    trade = open_trades.pop(instr)
+                    trade['close_time'] = dt
+                    trade['pnl'] = balance - trade['open_balance']
+                    trades.append(trade)
 
+        # Если остались незакрытые сделки в конце
+        for instr, trade in open_trades.items():
+            trade['close_time'] = None
+            trade['pnl'] = None
+            trades.append(trade)
+
+        # Сохраняем сделки в CSV
         with open('trades_log.csv', 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=['open_time', 'direction', 'volume', 'entry_price',
-                                                'take_profit', 'stop_loss', 'close_time', 'pnl', 'open_balance'])
+            fieldnames = ['instrument', 'open_time', 'direction', 'volume', 'entry_price',
+                          'take_profit', 'stop_loss', 'close_time', 'pnl', 'open_balance']
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(trades)
 
         print(f"Записано {len(trades)} сделок в trades_log.csv")
-
-    print("Результаты тестирования:")
-    print(f"  Total Return: {output['total_return']:.4f}")
-    print(f"  Sharpe Ratio: {output['sharp_ratio']:.4f}")
-    print(f"  Max Drawdown: {output['max_drawdown']:.2f}%")
-
-else:
-    print(f"Ошибка выполнения: {result.returncode}")
-    print(result.stderr)

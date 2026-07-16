@@ -91,41 +91,57 @@ for i in range(min_length, len(data)):
     current_state = data['current_state'].iloc[i-1]
 
     new_state = broker.check_response(current_state, response)
+
+    print('new_state after check_response',file=sys.stderr)
+    print(new_state.balance,file=sys.stderr)
+
     new_state = broker.check_position(new_state, data[:i+1])
+
+    print('new_state after check position',file=sys.stderr)
+    print(new_state.balance,file=sys.stderr)
+
     data.iloc[i, data.columns.get_loc('current_state')] = new_state
     States.append(new_state)
 
-    # if args.logs:
-    #     # Преобразуем response в словарь
-    #     if isinstance(response, Wait):
-    #         decision_dict = {'type': 'Wait'}
-    #     else:
-    #         decision_dict = {
-    #             'type': 'Open_Position',
-    #             'direction': response.direction,
-    #             'volume': response.volume,
-    #             'entry_price': response.entry_price,
-    #             'take_profit': response.take_profit,
-    #             'stop_loss': response.stop_loss
-    #         }
-    #     # Преобразуем positions в список словарей
-    #     positions_list = []
-    #     for pos in new_state.positions:
-    #         positions_list.append({
-    #             'direction': pos.direction,
-    #             'volume': pos.volume,
-    #             'entry_price': pos.entry_price,
-    #             'take_profit': pos.take_profit,
-    #             'stop_loss': pos.stop_loss,
-    #             'amount': pos.amount
-    #         })
-    #     current_line = {
-    #         'datetime': data.index[i],
-    #         'balance': new_state.balance,
-    #         'decision': decision_dict,
-    #         'positions': positions_list
-    #     }
-    #     logs.append(current_line)
+    # Чистый вайбкод
+    if args.logs:
+        # 1. Преобразуем решения (response) в словарь решений
+        decisions_dict = {}
+        for instrument, decision in response.items():
+            if isinstance(decision, Wait):
+                decisions_dict[instrument] = {'type': 'Wait'}
+            else:
+                decisions_dict[instrument] = {
+                    'type': 'Open_Position',
+                    'direction': decision.direction,
+                    'volume': decision.volume,
+                    'entry_price': decision.entry_price,
+                    'take_profit': decision.take_profit,
+                    'stop_loss': decision.stop_loss
+                }
+        
+        # 2. Преобразуем позиции (new_state.positions) в словарь списков словарей
+        positions_dict = {}
+        for instrument, pos_list in new_state.positions.items():
+            positions_dict[instrument] = []
+            for pos in pos_list:
+                positions_dict[instrument].append({
+                    'direction': pos.direction,
+                    'volume': pos.volume,
+                    'entry_price': pos.entry_price,
+                    'take_profit': pos.take_profit,
+                    'stop_loss': pos.stop_loss,
+                    'amount': pos.amount
+                })
+        
+        # 3. Формируем запись лога
+        current_line = {
+            'datetime': data.index[i].isoformat(),  # сохраняем как строку для JSON
+            'balance': new_state.balance,
+            'decisions': decisions_dict,   # словарь решений по инструментам
+            'positions': positions_dict    # словарь позиций по инструментам
+        }
+        logs.append(current_line)
 
 
 def calculate_metrics(states):

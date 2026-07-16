@@ -15,7 +15,7 @@ class test_broker(Basic_Broker):
             pos_list = new_state.positions.get(instrument, [])
 
             # Разобраться почему isinstant не работает
-            if type(response) != type(Wait()):
+            if type(decision) == type(Wait()):
                 continue
 
             if len(pos_list)>2:

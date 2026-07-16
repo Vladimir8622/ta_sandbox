@@ -45,11 +45,11 @@ class Test_strategy(Basic_Strategy):
         value = random.choice([-1, 0, 1])
         if value == -1:
             balance = data_to_process['current_state'].iloc[-1].balance
-            price = 1
+            price = price = data_to_process[self.Name]['close'].iloc[-1]
             decison = Open_Position(-1,1,price, take_profit = price*(1-self.take_profit_percent), stop_loss = price*(1+self.stop_loss_percent))
         elif value == 1:
             balance = data_to_process['current_state'].iloc[-1].balance
-            price = 1
+            price = price = data_to_process[self.Name]['close'].iloc[-1]
             decison = Open_Position(1,1,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price*(1-self.stop_loss_percent))
         else:
             decison = Wait()
