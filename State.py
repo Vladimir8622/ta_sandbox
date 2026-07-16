@@ -1,11 +1,14 @@
 class State:
     def __init__(self,balance = 1):
         self.balance = balance
-        self.positions = []
+        self.positions = {}
     
     def copy(self):
         new_state = State(balance=self.balance)
         
-        new_state.positions = [pos.copy() for pos in self.positions]
+        new_state.positions = {
+            instr: [pos.copy() for pos in pos_list]
+            for instr, pos_list in self.positions.items()
+        }
 
         return new_state

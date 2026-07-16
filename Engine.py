@@ -20,22 +20,38 @@ if args.logs:
     logs = []
 
 #Загрузка даты
-Market = params['Market']
-Active = params['Active']
-Timeframe = params['Timeframe']
-Name = params['Name']
-Start = params['Start']
-End = params['End']
-
 manager = dm.Data_manager()
-data = manager.get_data(Market, Active, Timeframe, Name, Start, End)
+data = []
+
+for instrument in params['instruments']:
+    Market = instrument['Market']
+    Active = instrument['Active']
+    Timeframe = instrument['Timeframe']
+    Name = instrument['Name']
+    Start = instrument['Start']
+    End = instrument['End']
+
+    df = manager.get_data(Market, Active, Timeframe, Name, Start, End)
+
+    df = df.set_index('begin')  
+    
+    multi_columns = pd.MultiIndex.from_product([[Name], df.columns])
+    df.columns = multi_columns
+    
+    data.append(df)
+
+data = pd.concat(data, axis=1)
+
+data = data.sort_index(axis=1)
 
 #Определяем стратегию
 import importlib.util
 import sys
 
-file_path = params['path']
-class_name = params['name']
+strategy_info = params['info']
+
+file_path = strategy_info['path']
+class_name = strategy_info['name']
 
 spec = importlib.util.spec_from_file_location("my_module", file_path)
 module = importlib.util.module_from_spec(spec)
@@ -45,26 +61,33 @@ spec.loader.exec_module(module)
 MyClass = getattr(module, class_name)
 
 known_keys = {'Market','Active','Timeframe','Name','Start','End','commissions','slippage','name','path'}
-strategy_kwargs = {k: v for k, v in params.items() if k not in known_keys}
+
+strategy_params = params['strategy']
+strategy_kwargs = {k: v for k, v in strategy_params.items() if k not in known_keys}
 
 strategy = MyClass(**strategy_kwargs)
 
 #Определяем брокера
-commissions = params['commissions']
-slippage = params['slippage']
+brokers_info = params['brokers']
+
+commissions = brokers_info['commissions']
+slippage = brokers_info['slippage']
 broker = test_broker(commissions=commissions, slippage=slippage)
 
-
+# ??
 States = []
 
-data['current_state'] = [State(1)]* len(data)  
+data['current_state'] = [State(1) for x in range(len(data))] 
 
 # Узнаем сколько надо для стратегии на разогрев
 
 min_length = strategy.get_min_data_length()
 
 for i in range(min_length, len(data)):
-    response = strategy.make_decision(data[:i+1])
+    history = data[:i+1]
+
+    response = strategy.make_decision(history)
+
     current_state = data['current_state'].iloc[i-1]
 
     new_state = broker.check_response(current_state, response)
@@ -72,37 +95,37 @@ for i in range(min_length, len(data)):
     data.iloc[i, data.columns.get_loc('current_state')] = new_state
     States.append(new_state)
 
-    if args.logs:
-        # Преобразуем response в словарь
-        if isinstance(response, Wait):
-            decision_dict = {'type': 'Wait'}
-        else:
-            decision_dict = {
-                'type': 'Open_Position',
-                'direction': response.direction,
-                'volume': response.volume,
-                'entry_price': response.entry_price,
-                'take_profit': response.take_profit,
-                'stop_loss': response.stop_loss
-            }
-        # Преобразуем positions в список словарей
-        positions_list = []
-        for pos in new_state.positions:
-            positions_list.append({
-                'direction': pos.direction,
-                'volume': pos.volume,
-                'entry_price': pos.entry_price,
-                'take_profit': pos.take_profit,
-                'stop_loss': pos.stop_loss,
-                'amount': pos.amount
-            })
-        current_line = {
-            'datetime': data['begin'].iloc[i],
-            'balance': new_state.balance,
-            'decision': decision_dict,
-            'positions': positions_list
-        }
-        logs.append(current_line)
+    # if args.logs:
+    #     # Преобразуем response в словарь
+    #     if isinstance(response, Wait):
+    #         decision_dict = {'type': 'Wait'}
+    #     else:
+    #         decision_dict = {
+    #             'type': 'Open_Position',
+    #             'direction': response.direction,
+    #             'volume': response.volume,
+    #             'entry_price': response.entry_price,
+    #             'take_profit': response.take_profit,
+    #             'stop_loss': response.stop_loss
+    #         }
+    #     # Преобразуем positions в список словарей
+    #     positions_list = []
+    #     for pos in new_state.positions:
+    #         positions_list.append({
+    #             'direction': pos.direction,
+    #             'volume': pos.volume,
+    #             'entry_price': pos.entry_price,
+    #             'take_profit': pos.take_profit,
+    #             'stop_loss': pos.stop_loss,
+    #             'amount': pos.amount
+    #         })
+    #     current_line = {
+    #         'datetime': data.index[i],
+    #         'balance': new_state.balance,
+    #         'decision': decision_dict,
+    #         'positions': positions_list
+    #     }
+    #     logs.append(current_line)
 
 
 def calculate_metrics(states):

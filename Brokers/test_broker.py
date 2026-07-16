@@ -9,39 +9,68 @@ class test_broker(Basic_Broker):
 
     def check_response(self,current_state,response):
         new_state = current_state.copy()
-        if current_state.positions == []:
+
+        for instrument, decision in response.items():
+
+            pos_list = new_state.positions.get(instrument, [])
+
+            # Разобраться почему isinstant не работает
             if type(response) != type(Wait()):
-                if response.direction == 1:
-                    position = Position(1,response.volume,response.entry_price,take_profit =  response.take_profit,stop_loss =  response.stop_loss)
-                    new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
-                    new_state.positions.append(position)
-                elif response.direction == -1:
-                    position = Position(-1,response.volume,response.entry_price,take_profit = response.take_profit, stop_loss = response.stop_loss)
-                    new_state.balance -= response.volume * (1 + self.commissions + self.slippage)
-                    new_state.positions.append(position)
-                else:
-                    raise ValueError('Неправильно заданый ответ стратегии')
+                continue
+
+            if len(pos_list)>2:
+                continue
+
+            if decision.direction == 1:
+
+                position = Position(1,
+                                    decision.volume,
+                                    decision.entry_price,
+                                    take_profit =  decision.take_profit,
+                                    stop_loss =  decision.stop_loss)
+                
+                new_state.balance -= decision.volume * (1 + self.commissions + self.slippage)
+                pos_list.append(position)
+
+            elif decision.direction == -1:
+                position = Position(-1,
+                                    decision.volume,
+                                    decision.entry_price,
+                                    take_profit = decision.take_profit,
+                                    stop_loss = decision.stop_loss)
+                new_state.balance -= decision.volume * (1 + self.commissions + self.slippage)
+                pos_list.append(position)
             else:
-                pass
+                raise ValueError('Неправильно заданый ответ стратегии')
+            
+            new_state.positions[instrument] = pos_list
+
 
         return new_state
+    
+
     def check_position(self, current_state, data):
         new_state = current_state.copy()
-        last_price = data['close'].to_list()[-1]
-        positions = current_state.positions
-        for position in positions[:]:
-            current_direction = position.direction
-            stop_loss = position.stop_loss
-            take_profit = position.take_profit
-            if current_direction == 1:
-                if last_price < stop_loss or last_price > take_profit:
-                    positions.remove(position) 
-                    new_state.balance += position.amount * last_price*(1 - self.commissions - self.slippage)
-            elif current_direction == -1:
-                if last_price > stop_loss or last_price < take_profit:
-                    positions.remove(position) 
-                    new_state.balance += position.amount * last_price*(1 - self.commissions -  self.slippage)
-            else: 
-                pass
-        new_state.positions = positions
+
+        for instrument, positions in new_state.positions.items():
+
+            last_price = data[instrument]['close'].to_list()[-1]
+            positions = positions
+
+            for position in positions[:]:
+                current_direction = position.direction
+                stop_loss = position.stop_loss
+                take_profit = position.take_profit
+                if current_direction == 1:
+                    if last_price < stop_loss or last_price > take_profit:
+                        positions.remove(position) 
+                        new_state.balance += position.amount * last_price*(1 - self.commissions - self.slippage)
+                elif current_direction == -1:
+                    if last_price > stop_loss or last_price < take_profit:
+                        positions.remove(position) 
+                        new_state.balance += position.amount * last_price*(1 - self.commissions -  self.slippage)
+                else: 
+                    pass
+
+            new_state.positions[instrument] = positions
         return new_state

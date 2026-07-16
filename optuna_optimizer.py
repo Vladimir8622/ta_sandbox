@@ -8,7 +8,7 @@ from functools import partial
 import importlib.util
 import sys
 # Узнаем у стратегии основную инфу
-file_path = 'Strategies\MA_cross.py'  # Путь к вашему файлу
+file_path = r'Strategies\MA_cross.py'  # Путь к вашему файлу
 class_name = 'MA_cross'               # Имя класса
 strategy_info = {'name': class_name,
                  'path': file_path
@@ -31,6 +31,7 @@ strategy_params = MyClass.get_strategy_params()
 brokers_params = {'commissions':3*10**(-4),'slippage':10**(-5)}
 
 def objective(trial,data_params,brokers_params,strategy_params, strategy_info):
+    # Распаковываем массив параметров
     suggested = {}
     for row in strategy_params:
         name = row['name']
@@ -41,8 +42,14 @@ def objective(trial,data_params,brokers_params,strategy_params, strategy_info):
         else:
             raise ValueError('incorrect strategy params')
 
-    all_params = {**data_params, **brokers_params, **suggested, **strategy_info}
-    command = ['python', 'Engine.py', '--params', json.dumps(all_params)]
+    all_params = {
+        'instruments': data_params,
+        'brokers': brokers_params,
+        'strategy': suggested,
+        'info': strategy_info
+    }
+    
+    command = [sys.executable, 'Engine.py', '--params', json.dumps(all_params)]
     
     result = subprocess.run(command, capture_output=True, text=True)
 

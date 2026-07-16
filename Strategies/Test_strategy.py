@@ -10,7 +10,8 @@ class Test_strategy(Basic_Strategy):
         self.take_profit_percent = take_profit_percent
         self.stop_loss_percent = stop_loss_percent
 
-    
+        self.Name = "ABIO.MOEX"
+
     @staticmethod
     def get_data_params():
         Market = "MOEX"
@@ -19,14 +20,14 @@ class Test_strategy(Basic_Strategy):
         Name = "ABIO.MOEX"
         Start = "2023-08-18"
         End = "2026-07-08"
-        data_params = {
+        data_params = [{
             'Market': Market,
             'Active': Active,
             'Timeframe': Timeframe,
             'Name': Name,
             'Start': Start,
             'End': End
-        }
+        }]
         return data_params
     
     @staticmethod
@@ -44,11 +45,13 @@ class Test_strategy(Basic_Strategy):
         value = random.choice([-1, 0, 1])
         if value == -1:
             balance = data_to_process['current_state'].iloc[-1].balance
-            price = data_to_process['close'].iloc[-1]
-            return Open_Position(-1,1,price, take_profit = price*(1-self.take_profit_percent), stop_loss = price*(1+self.stop_loss_percent))
+            price = 1
+            decison = Open_Position(-1,1,price, take_profit = price*(1-self.take_profit_percent), stop_loss = price*(1+self.stop_loss_percent))
         elif value == 1:
             balance = data_to_process['current_state'].iloc[-1].balance
-            price = data_to_process['close'].iloc[-1]
-            return Open_Position(1,1,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price*(1-self.stop_loss_percent))
+            price = 1
+            decison = Open_Position(1,1,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price*(1-self.stop_loss_percent))
         else:
-            return Wait()
+            decison = Wait()
+        
+        return {self.Name:decison}

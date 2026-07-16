@@ -3,6 +3,7 @@ import json
 import matplotlib.pyplot as plt
 import csv
 from datetime import datetime
+import sys
 
 params = {
     "Market": "MOEX",          
@@ -21,7 +22,34 @@ params = {
     "stop_loss_percent": 0.01  
 }
 
-command = ['python', 'Engine.py', '--params', json.dumps(params), '--logs']
+
+
+data_params = [{"Market": "MOEX",          
+                "Active": "adjusted_stock",          
+                "Timeframe": "1d",            
+                "Name": "GD_5min",         
+                "Start": "2024-08-01",        
+                "End": "2025-12-01"}]
+
+brokers_params = {"commissions": 0.0001,       
+                    "slippage": 0.0}
+
+suggested = {"short_period": 8,  
+            "long_period": 10,
+            "take_profit_percent":0.01,    
+            "stop_loss_percent": 0.01  }
+
+strategy_info = {"path": "Strategies/MA_cross.py", 
+                "name": "MA_cross",  }
+
+all_params = {
+        'instruments': data_params,
+        'brokers': brokers_params,
+        'strategy': suggested,
+        'info': strategy_info
+    }
+
+command = [sys.executable, 'Engine.py', '--params', json.dumps(all_params), '--logs']
 result = subprocess.run(command, capture_output=True, text=True)
 
 if result.returncode == 0:

@@ -1,6 +1,6 @@
 1. unit tests
 2. wfo
-3. single strategy engine
+~~3. single strategy engine~~
 4. new data storage system
 5. multiprocessing in optimization
 6. portfolio strategy
@@ -9,4 +9,7 @@
 9. rewrite MA_cross to numpy
 10. make current optim work on gold
 
-3 6 8 9 10
+6 8 9 10
+реализовать ожидание
+убрать хардкод имени инструмента
+починить логирование на новую логику респонзов

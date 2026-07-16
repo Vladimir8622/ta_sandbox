@@ -39,6 +39,8 @@ class MA_cross(Basic_Strategy):
         self.take_profit_percent = take_profit_percent
         self.stop_loss_percent = stop_loss_percent
 
+        self.Name = "ABIO.MOEX"
+
     
     @staticmethod
     def get_data_params():
@@ -48,14 +50,14 @@ class MA_cross(Basic_Strategy):
         Name = "ABIO.MOEX"
         Start = "2023-08-18"
         End = "2026-07-08"
-        data_params = {
+        data_params = [{
             'Market': Market,
             'Active': Active,
             'Timeframe': Timeframe,
             'Name': Name,
             'Start': Start,
             'End': End
-        }
+        }]
         return data_params
     
     @staticmethod
@@ -72,18 +74,22 @@ class MA_cross(Basic_Strategy):
 
     def make_decision(self, data):
 
+        data_to_process = data[self.Name]
+
         need = max(self.long_period, self.short_period) + 1
-        close_tail = data['close'].iloc[-need:].to_numpy(dtype=np.float64)
+        close_tail = data_to_process['close'].iloc[-need:].to_numpy(dtype=np.float64)
 
         delta_last, delta_prev = _last_two_ma_deltas(close_tail, self.long_period, self.short_period)
 
         if delta_last > 0 and delta_prev < 0:
             balance = data['current_state'].iloc[-2].balance
-            price = data['close'].iloc[-2]
-            return Open_Position(1,balance,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price *(1-self.stop_loss_percent))
+            price = data_to_process['close'].iloc[-2]
+            decison = Open_Position(1,balance,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price *(1-self.stop_loss_percent))
         elif delta_last < 0 and delta_prev > 0:
             balance = data['current_state'].iloc[-2].balance
-            price = data['close'].iloc[-2]
-            return Open_Position(-1,balance,price, take_profit = price*(1-self.take_profit_percent), stop_loss = price *(1+self.stop_loss_percent))
+            price = data_to_process['close'].iloc[-2]
+            decison = Open_Position(-1,balance,price, take_profit = price*(1-self.take_profit_percent), stop_loss = price *(1+self.stop_loss_percent))
         else:
-            return Wait()
+            decison = Wait()
+        
+        return {self.Name:decison}
