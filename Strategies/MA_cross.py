@@ -39,27 +39,14 @@ class MA_cross(Basic_Strategy):
         self.take_profit_percent = take_profit_percent
         self.stop_loss_percent = stop_loss_percent
 
-        self.Name = "GD_5min"
-
+        self.Name = "test"
     
     @staticmethod
-    def get_data_params():
-        Market = "MOEX"
-        Active = "adjusted_stock"
-        Timeframe = "1d"
-        Name = "GD_5min"
-        Start = "2023-08-18"
-        End = "2026-07-08"
-        data_params = [{
-            'Market': Market,
-            'Active': Active,
-            'Timeframe': Timeframe,
-            'Name': Name,
-            'Start': Start,
-            'End': End
-        }]
-        return data_params
-    
+    def get_data_requirements():
+        return {
+            'num_of_instrument':'single'
+        }
+
     @staticmethod
     def get_strategy_params():
         return [
@@ -73,6 +60,9 @@ class MA_cross(Basic_Strategy):
         return max(self.long_period, self.short_period) + 1
 
     def make_decision(self, data):
+        # only for the first usage of this func
+        if self.Name == 'test':
+            self.Name = data.columns.get_level_values(0).tolist()[0]
 
         data_to_process = data[self.Name]
 

@@ -12,55 +12,36 @@ from skfolio.preprocessing import prices_to_returns
 from skfolio.optimization import MeanRisk, ObjectiveFunction
 
 
-class Portfolio(Basic_Strategy):
+class Portfolio_strategy(Basic_Strategy):
 
-    def __init__(self):
+    def __init__(self,rebalance_period,max_lot):
         super().__init__()
-        self.instruments = ["ABIO.MOEX", "ABRD.MOEX", "AFKS.MOEX"]  
+        self.rebalance_period = rebalance_period
+        self.max_lot = max_lot
+
+        self.instruments = 'test'
+    
+    @staticmethod
+    def get_data_requirements():
+        return {
+            'num_of_instrument':'multiple'
+        }
 
     @staticmethod
-    def get_data_params():
-        data_params =  [
-            {
-                'Market': "MOEX",
-                'Active': "adjusted_stock",
-                'Timeframe': "1d",
-                'Name': "ABIO.MOEX",
-                'Start': "2023-08-18",
-                'End': "2026-07-08"
-            },
-            {
-                'Market': "MOEX",
-                'Active': "adjusted_stock",
-                'Timeframe': "1d",
-                'Name': "ABRD.MOEX",
-                'Start': "2023-08-18",
-                'End': "2026-07-08"
-            },
-            {
-                'Market': "MOEX",
-                'Active': "adjusted_stock",
-                'Timeframe': "1d",
-                'Name': "AFKS.MOEX",
-                'Start': "2023-08-18",
-                'End': "2026-07-08"
-            }
+    def get_strategy_params():
+        return [
+            {'name': 'rebalance_period', 'type': 'int', 'min': 1, 'max': 500},
+            {'name': 'max_lot', 'type': 'int', 'min': 5, 'max': 45}
         ]
-        return data_params
-    
-    # @staticmethod
-    # def get_strategy_params():
-    #     return [
-    #         {'name': 'long_period', 'type': 'int', 'min': 50, 'max': 500},
-    #         {'name': 'short_period', 'type': 'int', 'min': 5, 'max': 45},
-    #         {'name': 'take_profit_percent', 'type': 'float', 'min': 0.001, 'max': 1},
-    #         {'name': 'stop_loss_percent', 'type': 'float', 'min': 0.001, 'max': 1},
-    #     ]
 
     def get_min_data_length(self):
-        return 1
+        return 300
 
     def make_decision(self, data):
+        # only for the first usage of this func
+        if self.instruments == 'test':
+            self.instruments = data.columns.get_level_values(0).tolist()
+
         data_to_process = data.copy()
         prices = data_to_process.xs('close', level=1, axis=1)
         log_ret = prices_to_returns(prices)
@@ -69,10 +50,12 @@ class Portfolio(Basic_Strategy):
         
         model_long_only = MeanRisk(
             risk_measure=RiskMeasure.VARIANCE,
-            objective_function=ObjectiveFunction.MAXIMIZE_RATIO,
+            objective_function=ObjectiveFunction.MAXIMIZE_UTILITY,
+            risk_aversion=1.0,
             min_weights=0.0,
             max_weights=0.3,
             portfolio_params=dict(name="Long-Only Max Sharpe"),
+            solver="OSQP"
         )
         model_long_only.fit(X_train)
 
