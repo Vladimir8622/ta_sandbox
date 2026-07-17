@@ -8,8 +8,8 @@ import sys
 data_params = [{"Market": "MOEX",          
                 "Active": "adjusted_stock",          
                 "Timeframe": "1d",            
-                "Name": "ABIO.MOEX",         
-                "Start": "2024-08-01",        
+                "Name": "GD_5min",         
+                "Start": "2025-08-01",        
                 "End": "2025-12-01"}]
 
 brokers_params = {"commissions": 0.1,       
