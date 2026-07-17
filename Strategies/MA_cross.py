@@ -39,7 +39,7 @@ class MA_cross(Basic_Strategy):
         self.take_profit_percent = take_profit_percent
         self.stop_loss_percent = stop_loss_percent
 
-        self.Name = "ABIO.MOEX"
+        self.Name = "GD_5min"
 
     
     @staticmethod
@@ -47,7 +47,7 @@ class MA_cross(Basic_Strategy):
         Market = "MOEX"
         Active = "adjusted_stock"
         Timeframe = "1d"
-        Name = "ABIO.MOEX"
+        Name = "GD_5min"
         Start = "2023-08-18"
         End = "2026-07-08"
         data_params = [{
