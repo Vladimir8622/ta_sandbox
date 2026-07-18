@@ -43,7 +43,10 @@ for instrument in params['instruments']:
 data = pd.concat(data, axis=1)
 
 data = data.sort_index(axis=1)
+instrument_names = [instr['Name'] for instr in params['instruments']]
+close_cols = [(name, 'close') for name in instrument_names]
 
+data = data.dropna(subset=close_cols)
 #Определяем стратегию
 import importlib.util
 import sys

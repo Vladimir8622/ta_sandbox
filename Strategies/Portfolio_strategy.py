@@ -35,7 +35,7 @@ class Portfolio_strategy(Basic_Strategy):
         ]
 
     def get_min_data_length(self):
-        return 5
+        return 100
 
     def make_decision(self, data):
         # only for the first usage of this func
@@ -55,13 +55,12 @@ class Portfolio_strategy(Basic_Strategy):
             min_weights=0.0,
             max_weights=0.3,
             portfolio_params=dict(name="Long-Only Max Sharpe"),
-            solver="OSQP"
-        )
+            solver="CLARABEL"        )
         model_long_only.fit(X_train)
 
         pred_long_only = model_long_only.predict(X_test)
 
-        weights = pred_long_only.get_weights()
+        weights = pred_long_only.weights_dict
         
         current_state = data_to_process['current_state'].iloc[-1]
         balance = current_state.balance
