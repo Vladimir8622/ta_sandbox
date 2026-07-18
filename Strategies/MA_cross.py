@@ -39,6 +39,7 @@ class MA_cross(Basic_Strategy):
         self.take_profit_percent = take_profit_percent
         self.stop_loss_percent = stop_loss_percent
 
+<<<<<<< HEAD
         self.Name = "ABIO.MOEX"
 
     
@@ -60,6 +61,16 @@ class MA_cross(Basic_Strategy):
         }]
         return data_params
     
+=======
+        self.Name = "test"
+    
+    @staticmethod
+    def get_data_requirements():
+        return {
+            'num_of_instrument':'single'
+        }
+
+>>>>>>> 08f2530dea12f86427f1385fec8a32ba38df4402
     @staticmethod
     def get_strategy_params():
         return [
@@ -73,6 +84,9 @@ class MA_cross(Basic_Strategy):
         return max(self.long_period, self.short_period) + 1
 
     def make_decision(self, data):
+        # only for the first usage of this func
+        if self.Name == 'test':
+            self.Name = data.columns.get_level_values(0).tolist()[0]
 
         data_to_process = data[self.Name]
 

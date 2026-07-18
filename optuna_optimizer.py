@@ -8,8 +8,16 @@ from functools import partial
 import importlib.util
 import sys
 # Узнаем у стратегии основную инфу
-file_path = r'Strategies\MA_cross.py'  # Путь к вашему файлу
-class_name = 'MA_cross'               # Имя класса
+
+# file_path = r'Strategies\MA_cross.py'  # Путь к вашему файлу
+# class_name = 'MA_cross'               # Имя класса
+
+# file_path = r'Strategies\Test_strategy.py'
+# class_name = 'Test_strategy'
+
+file_path = r'Strategies\Portfolio_strategy.py'
+class_name = 'Portfolio_strategy'
+
 strategy_info = {'name': class_name,
                  'path': file_path
                  }
@@ -21,7 +29,54 @@ spec.loader.exec_module(module)
 
 MyClass = getattr(module, class_name)
 
-data_params = MyClass.get_data_params()
+# Market = "MOEX"
+# Active = "adjusted_stock"
+# Timeframe = "1d"
+# Name = "ABIO.MOEX"
+# Start = "2023-08-18"
+# End = "2026-07-08"
+
+# data_params = [{
+#     'Market': Market,
+#     'Active': Active,
+#     'Timeframe': Timeframe,
+#     'Name': Name,
+#     'Start': Start,
+#     'End': End
+# }]
+
+data_params =  [
+            {
+                'Market': "MOEX",
+                'Active': "adjusted_stock",
+                'Timeframe': "1d",
+                'Name': "ABIO.MOEX",
+                'Start': "2023-08-18",
+                'End': "2026-07-08"
+            },
+            {
+                'Market': "MOEX",
+                'Active': "adjusted_stock",
+                'Timeframe': "1d",
+                'Name': "ABRD.MOEX",
+                'Start': "2023-08-18",
+                'End': "2026-07-08"
+            },
+            {
+                'Market': "MOEX",
+                'Active': "adjusted_stock",
+                'Timeframe': "1d",
+                'Name': "AFKS.MOEX",
+                'Start': "2023-08-18",
+                'End': "2026-07-08"
+            }
+        ]
+
+necessary_instr_num = MyClass.get_data_requirements()['num_of_instrument']
+
+# Внимательно тут надо смотреть, что сообщаем и кому.
+if len(data_params) != 1 and necessary_instr_num == 'single':
+    ValueError("incorrect num of instrument for this strategy")
 
 strategy_params = MyClass.get_strategy_params()
 

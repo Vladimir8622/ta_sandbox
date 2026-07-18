@@ -8,7 +8,7 @@ class Basic_Strategy(ABC):
         pass
 
     @abstractmethod
-    def get_data_params(self) -> dict:
+    def get_data_requirements(self) -> dict:
         pass
 
     @abstractmethod
