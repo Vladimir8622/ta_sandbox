@@ -5,11 +5,6 @@
 6. portfolio strategy
 7. demon on optimization
 8. compare portfolio with snp 
-<<<<<<< HEAD
-~~9. rewrite MA_cross to numpy~~
-~~10. make current optim work on gold~~
-=======
->>>>>>> 08f2530dea12f86427f1385fec8a32ba38df4402
 
 6 8
 реализовать ожидание

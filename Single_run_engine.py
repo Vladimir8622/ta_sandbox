@@ -5,21 +5,130 @@ import csv
 from datetime import datetime
 import sys
 
-data_params = [{"Market": "MOEX",          
-                "Active": "adjusted_stock",          
-                "Timeframe": "1d",            
-                "Name": "GD_5min",         
-                "Start": "2025-08-01",        
-                "End": "2025-12-01"}]
+data_params = [
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ABIO.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ABRD.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AFKS.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AFLT.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AKRN.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ALRS.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AMEZ.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "APRI.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "APTK.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AQUA.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ARSA.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ASSB.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ASTR.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AVAN.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    }
+]
 
 brokers_params = {"commissions": 0.1,       
                     "slippage": 0.0}
 
-suggested = {"take_profit_percent":0.01,    
-            "stop_loss_percent": 0.01  }
+suggested = {"rebalance_period":0.01,    
+            "max_lot": 0.01  }
 
-strategy_info = {"path": r"Strategies\Test_strategy.py", 
-                "name": "Test_strategy",  }
+strategy_info = {"path": r"Strategies\Portfolio_strategy.py", 
+                "name": "Portfolio_strategy",  }
 
 all_params = {
         'instruments': data_params,

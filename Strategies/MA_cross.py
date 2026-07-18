@@ -39,29 +39,6 @@ class MA_cross(Basic_Strategy):
         self.take_profit_percent = take_profit_percent
         self.stop_loss_percent = stop_loss_percent
 
-<<<<<<< HEAD
-        self.Name = "ABIO.MOEX"
-
-    
-    @staticmethod
-    def get_data_params():
-        Market = "MOEX"
-        Active = "adjusted_stock"
-        Timeframe = "1d"
-        Name = "ABIO.MOEX"
-        Start = "2023-08-18"
-        End = "2026-07-08"
-        data_params = [{
-            'Market': Market,
-            'Active': Active,
-            'Timeframe': Timeframe,
-            'Name': Name,
-            'Start': Start,
-            'End': End
-        }]
-        return data_params
-    
-=======
         self.Name = "test"
     
     @staticmethod
@@ -70,7 +47,6 @@ class MA_cross(Basic_Strategy):
             'num_of_instrument':'single'
         }
 
->>>>>>> 08f2530dea12f86427f1385fec8a32ba38df4402
     @staticmethod
     def get_strategy_params():
         return [

@@ -35,7 +35,7 @@ class Portfolio_strategy(Basic_Strategy):
         ]
 
     def get_min_data_length(self):
-        return 300
+        return 5
 
     def make_decision(self, data):
         # only for the first usage of this func
