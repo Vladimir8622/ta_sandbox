@@ -7,6 +7,46 @@ import argparse
 import json
 import pandas as pd
 import sys
+import importlib.util
+
+def create_logs(response,new_state,datetime):
+    # 1. Преобразуем решения (response) в словарь решений
+    decisions_dict = {}
+    for instrument, decision in response.items():
+        if isinstance(decision, Wait):
+            decisions_dict[instrument] = {'type': 'Wait'}
+        else:
+            decisions_dict[instrument] = {
+                'type': 'Open_Position',
+                'direction': decision.direction,
+                'volume': decision.volume,
+                'entry_price': decision.entry_price,
+                'take_profit': decision.take_profit,
+                'stop_loss': decision.stop_loss
+            }
+    
+    # 2. Преобразуем позиции (new_state.positions) в словарь списков словарей
+    positions_dict = {}
+    for instrument, pos_list in new_state.positions.items():
+        positions_dict[instrument] = []
+        for pos in pos_list:
+            positions_dict[instrument].append({
+                'direction': pos.direction,
+                'volume': pos.volume,
+                'entry_price': pos.entry_price,
+                'take_profit': pos.take_profit,
+                'stop_loss': pos.stop_loss,
+                'amount': pos.amount
+            })
+    
+    # 3. Формируем запись лога
+    current_line = {
+        'datetime': datetime,  # сохраняем как строку для JSON
+        'balance': new_state.balance,
+        'decisions': decisions_dict,   # словарь решений по инструментам
+        'positions': positions_dict    # словарь позиций по инструментам
+    }
+    return current_line
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--params', type=str, required=True)
@@ -47,9 +87,8 @@ instrument_names = [instr['Name'] for instr in params['instruments']]
 close_cols = [(name, 'close') for name in instrument_names]
 
 data = data.dropna(subset=close_cols)
+
 #Определяем стратегию
-import importlib.util
-import sys
 
 strategy_info = params['info']
 
@@ -77,8 +116,6 @@ commissions = brokers_info['commissions']
 slippage = brokers_info['slippage']
 broker = test_broker(commissions=commissions, slippage=slippage)
 
-# ??
-States = []
 
 data['current_state'] = [State(1) for x in range(len(data))] 
 
@@ -104,46 +141,11 @@ for i in range(min_length, len(data)):
     print(new_state.balance,file=sys.stderr)
 
     data.iloc[i, data.columns.get_loc('current_state')] = new_state
-    States.append(new_state)
 
-    # Чистый вайбкод
     if args.logs:
-        # 1. Преобразуем решения (response) в словарь решений
-        decisions_dict = {}
-        for instrument, decision in response.items():
-            if isinstance(decision, Wait):
-                decisions_dict[instrument] = {'type': 'Wait'}
-            else:
-                decisions_dict[instrument] = {
-                    'type': 'Open_Position',
-                    'direction': decision.direction,
-                    'volume': decision.volume,
-                    'entry_price': decision.entry_price,
-                    'take_profit': decision.take_profit,
-                    'stop_loss': decision.stop_loss
-                }
-        
-        # 2. Преобразуем позиции (new_state.positions) в словарь списков словарей
-        positions_dict = {}
-        for instrument, pos_list in new_state.positions.items():
-            positions_dict[instrument] = []
-            for pos in pos_list:
-                positions_dict[instrument].append({
-                    'direction': pos.direction,
-                    'volume': pos.volume,
-                    'entry_price': pos.entry_price,
-                    'take_profit': pos.take_profit,
-                    'stop_loss': pos.stop_loss,
-                    'amount': pos.amount
-                })
-        
-        # 3. Формируем запись лога
-        current_line = {
-            'datetime': data.index[i].isoformat(),  # сохраняем как строку для JSON
-            'balance': new_state.balance,
-            'decisions': decisions_dict,   # словарь решений по инструментам
-            'positions': positions_dict    # словарь позиций по инструментам
-        }
+        current_line = create_logs(response = response,
+                                   new_state = new_state,
+                                   datetime = data.index[i].isoformat())
         logs.append(current_line)
 
 
@@ -196,7 +198,8 @@ def calculate_metrics(states):
     }
 
     return result
-result = calculate_metrics(States)
+
+result = calculate_metrics(data['current_state'].iloc[min_length:].to_list())
 
 if args.logs:
     # logs = pd.DataFrame(logs)
