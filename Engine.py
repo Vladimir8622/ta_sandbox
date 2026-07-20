@@ -116,15 +116,10 @@ commissions = brokers_info['commissions']
 slippage = brokers_info['slippage']
 broker = test_broker(commissions=commissions, slippage=slippage)
 
-<<<<<<< HEAD
 # ??
 States = []
 initial_balance = 100 #начальный баланс
 data['current_state'] = [State(initial_balance) for x in range(len(data))] 
-=======
-
-data['current_state'] = [State(1) for x in range(len(data))] 
->>>>>>> ff4237bfc90bbf37321c306d05fae23730cfb2c2
 
 # Узнаем сколько надо для стратегии на разогрев
 
