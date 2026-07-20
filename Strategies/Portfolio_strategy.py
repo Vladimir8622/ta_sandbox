@@ -18,7 +18,8 @@ class Portfolio_strategy(Basic_Strategy):
         super().__init__()
         self.rebalance_period = rebalance_period
         self.max_lot = max_lot
-
+        self.bar_count = 0          
+        self.target_weights = {}    
         self.instruments = 'test'
     
     @staticmethod
@@ -42,6 +43,12 @@ class Portfolio_strategy(Basic_Strategy):
         if self.instruments == 'test':
             self.instruments = data.columns.get_level_values(0).tolist()
 
+        is_rebalance_day = (self.bar_count % self.rebalance_period == 0)
+        self.bar_count += 1
+
+        if not is_rebalance_day:
+            return {instr: Wait() for instr in self.instruments}     
+               
         data_to_process = data.copy()
         prices = data_to_process.xs('close', level=1, axis=1)
         log_ret = prices_to_returns(prices)
@@ -53,7 +60,7 @@ class Portfolio_strategy(Basic_Strategy):
             objective_function=ObjectiveFunction.MAXIMIZE_UTILITY,
             risk_aversion=1.0,
             min_weights=0.0,
-            max_weights=0.3,
+            max_weights=1,
             portfolio_params=dict(name="Long-Only Max Sharpe"),
             solver="CLARABEL"        )
         model_long_only.fit(X_train)

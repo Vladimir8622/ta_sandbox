@@ -121,10 +121,10 @@ data_params = [
     }
 ]
 
-brokers_params = {"commissions": 0.1,       
+brokers_params = {"commissions": 0.0001,       
                     "slippage": 0.0}
 
-suggested = {"rebalance_period":0.01,    
+suggested = {"rebalance_period":100,    
             "max_lot": 0.01  }
 
 strategy_info = {"path": r"Strategies\Portfolio_strategy.py", 

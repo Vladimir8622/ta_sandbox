@@ -1,5 +1,5 @@
 class State:
-    def __init__(self,balance = 1):
+    def __init__(self,balance = 100):
         self.balance = balance
         self.positions = {}
     

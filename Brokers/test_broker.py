@@ -24,8 +24,8 @@ class test_broker(Basic_Broker):
             if decision.direction == 1:
 
                 position = Position(1,
-                                    decision.volume,
-                                    decision.entry_price,
+                                    volume = decision.volume,
+                                    entry_price = decision.entry_price,
                                     take_profit =  decision.take_profit,
                                     stop_loss =  decision.stop_loss)
                 
@@ -34,8 +34,8 @@ class test_broker(Basic_Broker):
 
             elif decision.direction == -1:
                 position = Position(-1,
-                                    decision.volume,
-                                    decision.entry_price,
+                                    volume = decision.volume,
+                                    entry_price = decision.entry_price,
                                     take_profit = decision.take_profit,
                                     stop_loss = decision.stop_loss)
                 new_state.balance -= decision.volume * (1 + self.commissions + self.slippage)

@@ -79,8 +79,8 @@ broker = test_broker(commissions=commissions, slippage=slippage)
 
 # ??
 States = []
-
-data['current_state'] = [State(1) for x in range(len(data))] 
+initial_balance = 100 #начальный баланс
+data['current_state'] = [State(initial_balance) for x in range(len(data))] 
 
 # Узнаем сколько надо для стратегии на разогрев
 
