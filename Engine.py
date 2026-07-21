@@ -120,8 +120,7 @@ commissions = brokers_info['commissions']
 slippage = brokers_info['slippage']
 broker = test_broker(commissions=commissions, slippage=slippage) 
 
-# ??
-States = []
+
 initial_balance = 100 #начальный баланс
 data['current_state'] = [State(initial_balance) for x in range(len(data))] 
 
@@ -135,14 +134,17 @@ for i in range(min_length, len(data)):
     response = strategy.make_decision(history)
 
     current_state = data['current_state'].iloc[i-1]
+    
+    last_row = data.iloc[i]
 
-    new_state = broker.check_response(current_state, response)
+    new_state = broker.check_response(current_state=current_state,
+                                       response=response,
+                                       last_row=last_row)
 
     print('new_state after check_response',file=sys.stderr)
     print(new_state.balance,file=sys.stderr)
 
     new_state = broker.check_position(new_state, data[:i+1])
-    new_state = broker.check_close_all(new_state, response, data[:i+1])  #закрытие всего
 
     print('new_state after check position',file=sys.stderr)
     print(new_state.balance,file=sys.stderr)

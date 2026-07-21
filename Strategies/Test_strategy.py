@@ -31,7 +31,8 @@ class Test_strategy(Basic_Strategy):
     def make_decision(self, data):
         # only for the first usage of this func
         if self.Name == 'test':
-            self.Name = data.columns.get_level_values(0).tolist()[0]
+            all_level0 = data.columns.get_level_values(0).tolist()
+            self.Name = [name for name in all_level0 if name != 'current_state'][0]
 
         data_to_process = data.copy()
         value = random.choice([-1, 0, 1])

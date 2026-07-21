@@ -42,7 +42,8 @@ class Portfolio_strategy(Basic_Strategy):
     def make_decision(self, data):
         # only for the first usage of this func
         if self.instruments == 'test':
-            self.instruments = data.columns.get_level_values(0).tolist()
+            all_level0 = data.columns.get_level_values(0).tolist()
+            self.instruments = [name for name in all_level0 if name != 'current_state']
 
         pre_rebalance_day = ((self.bar_count+1) % self.rebalance_period == 0)
         is_rebalance_day = (self.bar_count % self.rebalance_period == 0)

@@ -8,7 +8,7 @@ class test_broker(Basic_Broker):
         self.commissions = commissions
         self.slippage = slippage
 
-    def check_response(self,current_state,response):
+    def check_response(self,current_state,response,last_row):
         new_state = current_state.copy()
 
         for instrument, decision in response.items():
@@ -19,7 +19,24 @@ class test_broker(Basic_Broker):
             if type(decision) == type(Wait()):
                 continue
             if type(decision) == type(Close_all()):
-                continue
+                new_state = current_state.copy()
+
+                for instrument, decision in response.items():
+                    last_price = last_row[(instrument, 'close')]
+                    if instrument in new_state.positions:
+                        positions = new_state.positions[instrument]
+                    else:
+                        # В случае если инструмента еще не было
+                        positions = []
+
+                    for position in positions[:]:
+                        positions.remove(position) 
+                        new_state.balance += position.amount * last_price*(1 - self.commissions - self.slippage)
+
+                    new_state.positions[instrument] = positions
+                    # добавить проверку что массив пуст
+
+                return new_state
 
             if len(pos_list)>2:
                 continue
@@ -76,29 +93,4 @@ class test_broker(Basic_Broker):
                     pass
 
             new_state.positions[instrument] = positions
-        return new_state
-    
-    
-    def check_close_all(self,current_state,response, data):
-        new_state = current_state.copy()
-
-        for instrument, decision in response.items():
-
-            # Разобраться почему isinstant не работает
-            if type(decision) == type(Close_all()):
-                for instrument, positions in new_state.positions.items():
-                        last_price = data[instrument]['close'].to_list()[-1]
-                        positions = positions
-
-                        for position in positions[:]:
-                            positions.remove(position) 
-                            new_state.balance += position.amount * last_price*(1 - self.commissions - self.slippage)
-
-
-                        new_state.positions[instrument] = positions
-
-            else: continue
-
-        
-
         return new_state
