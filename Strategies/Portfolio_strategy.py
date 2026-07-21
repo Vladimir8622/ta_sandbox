@@ -4,6 +4,7 @@ from numba import njit
 from Strategies.Basic_Strategy import Basic_Strategy
 from Responses.Open_Position import Open_Position
 from Responses.Wait import Wait
+from Responses.Close_all import Close_all
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -43,8 +44,12 @@ class Portfolio_strategy(Basic_Strategy):
         if self.instruments == 'test':
             self.instruments = data.columns.get_level_values(0).tolist()
 
+        pre_rebalance_day = ((self.bar_count+1) % self.rebalance_period == 0)
         is_rebalance_day = (self.bar_count % self.rebalance_period == 0)
         self.bar_count += 1
+
+        if pre_rebalance_day:
+            return {instr: Close_all() for instr in self.instruments}     
 
         if not is_rebalance_day:
             return {instr: Wait() for instr in self.instruments}     

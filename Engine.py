@@ -1,5 +1,8 @@
 import data_management.Data_manager as dm
 from Brokers.test_broker import test_broker
+from Brokers.test_portfolio_broker import test_portfolio_broker
+from Responses.Close_all import Close_all
+
 from Responses.Open_Position import Open_Position
 from Responses.Wait import Wait
 from State import State
@@ -15,7 +18,9 @@ def create_logs(response,new_state,datetime):
     for instrument, decision in response.items():
         if isinstance(decision, Wait):
             decisions_dict[instrument] = {'type': 'Wait'}
-        else:
+        elif isinstance(decision, Close_all):
+            decisions_dict[instrument] = {'type': 'Close_all'}
+        else:  # это Open_Position
             decisions_dict[instrument] = {
                 'type': 'Open_Position',
                 'direction': decision.direction,
@@ -114,7 +119,7 @@ brokers_info = params['brokers']
 
 commissions = brokers_info['commissions']
 slippage = brokers_info['slippage']
-broker = test_broker(commissions=commissions, slippage=slippage)
+broker = test_portfolio_broker(commissions=commissions, slippage=slippage) #Ахтунг!!! тестовый
 
 # ??
 States = []
@@ -138,6 +143,7 @@ for i in range(min_length, len(data)):
     print(new_state.balance,file=sys.stderr)
 
     new_state = broker.check_position(new_state, data[:i+1])
+    new_state = broker.check_close_all(new_state, response, data[:i+1])  #закрытие всего
 
     print('new_state after check position',file=sys.stderr)
     print(new_state.balance,file=sys.stderr)
