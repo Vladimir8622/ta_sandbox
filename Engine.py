@@ -1,7 +1,6 @@
 import data_management.Data_manager as dm
 from Brokers.test_broker import test_broker
 from Responses.Close_all import Close_all
-
 from Responses.Open_Position import Open_Position
 from Responses.Wait import Wait
 from State import State
@@ -10,6 +9,8 @@ import json
 import pandas as pd
 import sys
 import importlib.util
+
+import logging
 
 def create_logs(response,new_state,datetime):
     # 1. Преобразуем решения (response) в словарь решений
@@ -59,9 +60,17 @@ args = parser.parse_args()
 params = json.loads(args.params)
 
 # Включаем логгирование для проверку результатов оптимизации
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 if args.logs:
     print('Переходим в режим логгирования',file=sys.stderr)
     logs = []
+    handler = logging.FileHandler('test.log', encoding='utf-8')
+    handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(handler)
+else:
+    logger.addHandler(logging.NullHandler())
 
 #Загрузка даты
 manager = dm.Data_manager()
@@ -128,12 +137,18 @@ data['current_state'] = [State(initial_balance) for x in range(len(data))]
 
 min_length = strategy.get_min_data_length()
 
+logger.debug('Начинаю цикл по свечам')
+
 for i in range(min_length, len(data)):
+
     history = data[:i+1]
 
     response = strategy.make_decision(history)
 
     current_state = data['current_state'].iloc[i-1]
+
+    logger.debug('balance before check_response')
+    logger.debug(current_state.balance)
     
     last_row = data.iloc[i]
 
@@ -141,13 +156,13 @@ for i in range(min_length, len(data)):
                                        response=response,
                                        last_row=last_row)
 
-    print('new_state after check_response',file=sys.stderr)
-    print(new_state.balance,file=sys.stderr)
+    logger.debug('balance after check_response')
+    logger.debug(new_state.balance)
 
     new_state = broker.check_position(new_state, data[:i+1])
 
-    print('new_state after check position',file=sys.stderr)
-    print(new_state.balance,file=sys.stderr)
+    logger.debug('balance after check position')
+    logger.debug(new_state.balance)
 
     data.iloc[i, data.columns.get_loc('current_state')] = new_state
 
