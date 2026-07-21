@@ -1,6 +1,7 @@
 from Brokers.Basic_Broker import Basic_Broker
 from Position import Position
 from Responses.Wait import Wait
+from Responses.Close_all import Close_all
 
 class test_broker(Basic_Broker):
     def __init__(self, commissions, slippage):
@@ -16,6 +17,8 @@ class test_broker(Basic_Broker):
 
             # Разобраться почему isinstant не работает
             if type(decision) == type(Wait()):
+                continue
+            if type(decision) == type(Close_all()):
                 continue
 
             if len(pos_list)>2:
@@ -73,4 +76,29 @@ class test_broker(Basic_Broker):
                     pass
 
             new_state.positions[instrument] = positions
+        return new_state
+    
+    
+    def check_close_all(self,current_state,response, data):
+        new_state = current_state.copy()
+
+        for instrument, decision in response.items():
+
+            # Разобраться почему isinstant не работает
+            if type(decision) == type(Close_all()):
+                for instrument, positions in new_state.positions.items():
+                        last_price = data[instrument]['close'].to_list()[-1]
+                        positions = positions
+
+                        for position in positions[:]:
+                            positions.remove(position) 
+                            new_state.balance += position.amount * last_price*(1 - self.commissions - self.slippage)
+
+
+                        new_state.positions[instrument] = positions
+
+            else: continue
+
+        
+
         return new_state

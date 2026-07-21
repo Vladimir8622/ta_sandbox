@@ -1,6 +1,5 @@
 import data_management.Data_manager as dm
 from Brokers.test_broker import test_broker
-from Brokers.test_portfolio_broker import test_portfolio_broker
 from Responses.Close_all import Close_all
 
 from Responses.Open_Position import Open_Position
@@ -119,7 +118,7 @@ brokers_info = params['brokers']
 
 commissions = brokers_info['commissions']
 slippage = brokers_info['slippage']
-broker = test_portfolio_broker(commissions=commissions, slippage=slippage) #Ахтунг!!! тестовый
+broker = test_broker(commissions=commissions, slippage=slippage) 
 
 # ??
 States = []
