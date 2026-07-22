@@ -14,21 +14,21 @@ import logging
 
 def create_logs(response,new_state,datetime):
     # 1. Преобразуем решения (response) в словарь решений
-    decisions_dict = {}
-    for instrument, decision in response.items():
-        if isinstance(decision, Wait):
-            decisions_dict[instrument] = {'type': 'Wait'}
-        elif isinstance(decision, Close_all):
-            decisions_dict[instrument] = {'type': 'Close_all'}
-        else:  # это Open_Position
-            decisions_dict[instrument] = {
-                'type': 'Open_Position',
-                'direction': decision.direction,
-                'volume': decision.volume,
-                'entry_price': decision.entry_price,
-                'take_profit': decision.take_profit,
-                'stop_loss': decision.stop_loss
-            }
+    # decisions_dict = {}
+    # for instrument, decision in response.items():
+    #     if isinstance(decision, Wait):
+    #         decisions_dict[instrument] = {'type': 'Wait'}
+    #     elif isinstance(decision, Close_all):
+    #         decisions_dict[instrument] = {'type': 'Close_all'}
+    #     else:  # это Open_Position
+    #         decisions_dict[instrument] = {
+    #             'type': 'Open_Position',
+    #             'direction': decision.direction,
+    #             'volume': decision.volume,
+    #             'entry_price': decision.entry_price,
+    #             'take_profit': decision.take_profit,
+    #             'stop_loss': decision.stop_loss
+    #         }
     
     # 2. Преобразуем позиции (new_state.positions) в словарь списков словарей
     positions_dict = {}
@@ -48,7 +48,7 @@ def create_logs(response,new_state,datetime):
     current_line = {
         'datetime': datetime,  # сохраняем как строку для JSON
         'balance': new_state.balance,
-        'decisions': decisions_dict,   # словарь решений по инструментам
+        # 'decisions': decisions_dict,   # словарь решений по инструментам
         'positions': positions_dict    # словарь позиций по инструментам
     }
     return current_line

@@ -5,6 +5,7 @@ from Strategies.Basic_Strategy import Basic_Strategy
 from Responses.Open_Position import Open_Position
 from Responses.Wait import Wait
 from Responses.Close_all import Close_all
+from Responses.Mixed_response import Mixed_response
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -50,10 +51,10 @@ class Portfolio_strategy(Basic_Strategy):
         self.bar_count += 1
 
         if pre_rebalance_day:
-            return {instr: Close_all() for instr in self.instruments}     
+            return Close_all()  
 
         if not is_rebalance_day:
-            return {instr: Wait() for instr in self.instruments}     
+            return Wait()    
                
         data_to_process = data.copy()
         prices = data_to_process.xs('close', level=1, axis=1)
@@ -94,4 +95,4 @@ class Portfolio_strategy(Basic_Strategy):
                 
                 decisions[instrument] = Open_Position(direction=1,  volume=volume,entry_price=price,take_profit=float('inf'), stop_loss=0)
         
-        return decisions
+        return Mixed_response(decisions)

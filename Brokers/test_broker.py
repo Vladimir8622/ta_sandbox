@@ -2,6 +2,7 @@ from Brokers.Basic_Broker import Basic_Broker
 from Position import Position
 from Responses.Wait import Wait
 from Responses.Close_all import Close_all
+from Responses.Mixed_response import Mixed_response
 
 class test_broker(Basic_Broker):
     def __init__(self, commissions, slippage):
@@ -11,62 +12,68 @@ class test_broker(Basic_Broker):
     def check_response(self,current_state,response,last_row):
         new_state = current_state.copy()
 
-        for instrument, decision in response.items():
+        # Разобраться почему isinstant не работает
+        if type(response) == type(Wait()):
+            return new_state
+        
+        if type(response) == type(Close_all()):
+            new_state = current_state.copy()
 
-            pos_list = new_state.positions.get(instrument, [])
+            for instrument, decision in current_state.positions.items():
+                last_price = last_row[(instrument, 'close')]
+                if instrument in new_state.positions:
+                    positions = new_state.positions[instrument]
+                else:
+                    # В случае если инструмента еще не было
+                    positions = []
 
-            # Разобраться почему isinstant не работает
-            if type(decision) == type(Wait()):
-                continue
-            if type(decision) == type(Close_all()):
-                new_state = current_state.copy()
+                for position in positions[:]:
+                    positions.remove(position) 
+                    new_state.balance += position.amount * last_price*(1 - self.commissions - self.slippage)
 
-                for instrument, decision in response.items():
-                    last_price = last_row[(instrument, 'close')]
-                    if instrument in new_state.positions:
-                        positions = new_state.positions[instrument]
-                    else:
-                        # В случае если инструмента еще не было
-                        positions = []
+                new_state.positions[instrument] = positions
+                # добавить проверку что массив пуст
 
-                    for position in positions[:]:
-                        positions.remove(position) 
-                        new_state.balance += position.amount * last_price*(1 - self.commissions - self.slippage)
+            return new_state
+        
+        if type(response) == type(Mixed_response({})):
 
-                    new_state.positions[instrument] = positions
-                    # добавить проверку что массив пуст
+            for instrument, decision in response.positions.items():
 
-                return new_state
+                pos_list = new_state.positions.get(instrument, [])
 
-            if len(pos_list)>2:
-                continue
+                if type(decision) == type(Wait()):
+                    continue
 
-            if decision.direction == 1:
+                if len(pos_list)>2:
+                    continue
 
-                position = Position(1,
-                                    volume = decision.volume,
-                                    entry_price = decision.entry_price,
-                                    take_profit =  decision.take_profit,
-                                    stop_loss =  decision.stop_loss)
+                if decision.direction == 1:
+
+                    position = Position(1,
+                                        volume = decision.volume,
+                                        entry_price = decision.entry_price,
+                                        take_profit =  decision.take_profit,
+                                        stop_loss =  decision.stop_loss)
+                    
+                    new_state.balance -= decision.volume * (1 + self.commissions + self.slippage)
+                    pos_list.append(position)
+
+                elif decision.direction == -1:
+                    position = Position(-1,
+                                        volume = decision.volume,
+                                        entry_price = decision.entry_price,
+                                        take_profit = decision.take_profit,
+                                        stop_loss = decision.stop_loss)
+                    new_state.balance -= decision.volume * (1 + self.commissions + self.slippage)
+                    pos_list.append(position)
+                else:
+                    raise ValueError('Неправильно заданый ответ стратегии')
                 
-                new_state.balance -= decision.volume * (1 + self.commissions + self.slippage)
-                pos_list.append(position)
-
-            elif decision.direction == -1:
-                position = Position(-1,
-                                    volume = decision.volume,
-                                    entry_price = decision.entry_price,
-                                    take_profit = decision.take_profit,
-                                    stop_loss = decision.stop_loss)
-                new_state.balance -= decision.volume * (1 + self.commissions + self.slippage)
-                pos_list.append(position)
-            else:
-                raise ValueError('Неправильно заданый ответ стратегии')
-            
-            new_state.positions[instrument] = pos_list
+                new_state.positions[instrument] = pos_list
 
 
-        return new_state
+            return new_state
     
 
     def check_position(self, current_state, data):

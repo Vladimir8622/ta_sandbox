@@ -45,32 +45,121 @@ MyClass = getattr(module, class_name)
 #     'End': End
 # }]
 
-data_params =  [
-            {
-                'Market': "MOEX",
-                'Active': "adjusted_stock",
-                'Timeframe': "1d",
-                'Name': "ABIO.MOEX",
-                'Start': "2023-08-18",
-                'End': "2026-07-08"
-            },
-            {
-                'Market': "MOEX",
-                'Active': "adjusted_stock",
-                'Timeframe': "1d",
-                'Name': "ABRD.MOEX",
-                'Start': "2023-08-18",
-                'End': "2026-07-08"
-            },
-            {
-                'Market': "MOEX",
-                'Active': "adjusted_stock",
-                'Timeframe': "1d",
-                'Name': "AFKS.MOEX",
-                'Start': "2023-08-18",
-                'End': "2026-07-08"
-            }
-        ]
+data_params = [
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ABIO.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ABRD.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AFKS.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AFLT.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AKRN.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ALRS.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AMEZ.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "APRI.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "APTK.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AQUA.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ARSA.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ASSB.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "ASTR.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    },
+    {
+        'Market': "MOEX",
+        'Active': "adjusted_stock",
+        'Timeframe': "1d",
+        'Name': "AVAN.MOEX",
+        'Start': "2023-08-18",
+        'End': "2026-07-08"
+    }
+]
 
 necessary_instr_num = MyClass.get_data_requirements()['num_of_instrument']
 
