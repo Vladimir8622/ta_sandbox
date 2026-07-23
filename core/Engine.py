@@ -56,6 +56,8 @@ def create_logs(response,new_state,datetime):
     current_line = {
         'datetime': datetime,  # сохраняем как строку для JSON
         'balance': new_state.balance,
+        'margin': new_state.margin,     # свободные деньги
+
         # 'decisions': decisions_dict,   # словарь решений по инструментам
         'positions': positions_dict    # словарь позиций по инструментам
     }
@@ -162,7 +164,10 @@ for i in range(min_length, len(data)):
     
     last_row = data.iloc[i]
 
-    new_state = broker.check_response(current_state=current_state,
+    new_state = broker.mark_to_market(current_state=current_state,
+                                       last_row=last_row)
+
+    new_state = broker.check_response(current_state=new_state,
                                        response=response,
                                        last_row=last_row)
 

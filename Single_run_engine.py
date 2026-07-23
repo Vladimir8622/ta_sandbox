@@ -1,6 +1,7 @@
 import subprocess
 import json
 import matplotlib.pyplot as plt
+import pandas as pd
 import csv
 from datetime import datetime
 import sys
@@ -148,15 +149,7 @@ if result.returncode == 0:
     output = json.loads(result.stdout)
     logs = output.get('logs', [])
     if logs:
-        # График баланса
-        balances = [entry['balance'] for entry in logs]
-        plt.figure(figsize=(12,6))
-        plt.plot(balances)
-        plt.title('Equity Curve')
-        plt.savefig('equity.png')
-        plt.show()
-
-        # Определяем сделки по каждому инструменту
+        # Определяем сделки по каждому инструменту (нужно ДО графика, чтобы отметить точки входа/выхода)
         trades = []
         open_trades = {}  # instrument -> open_trade_info
 
@@ -205,6 +198,21 @@ if result.returncode == 0:
             trade['close_time'] = None
             trade['pnl'] = None
             trades.append(trade)
+
+        # График: баланс и маржа на одном листе
+        dates = pd.to_datetime([entry['datetime'] for entry in logs])
+        balances = pd.Series([entry['balance'] for entry in logs], index=dates)
+        margins = pd.Series([entry['margin'] for entry in logs], index=dates)
+
+        plt.figure(figsize=(12, 6))
+        plt.plot(balances.index, balances.values, color='red', linewidth=1.2, label='Balance')
+        plt.plot(margins.index, margins.values, color='blue', linewidth=1.2, label='Margin')
+        plt.title('Equity Curve')
+        plt.legend(loc='upper left')
+        plt.gcf().autofmt_xdate()
+        plt.tight_layout()
+        plt.savefig('equity.png', dpi=150)
+        plt.show()
 
         # Сохраняем сделки в CSV
         with open('trades_log.csv', 'w', newline='', encoding='utf-8') as f:

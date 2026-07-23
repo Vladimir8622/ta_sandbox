@@ -10,9 +10,9 @@ class test_broker(Basic_Broker):
     def __init__(self, commissions, slippage, main_logger_name):
         self.commissions = commissions
         self.slippage = slippage
-
+ 
         self.logger = logging.getLogger(main_logger_name + '.' + __name__ + '.' + self.__class__.__name__)
-
+ 
     def _log_state(self,message,state):
         # Строчка ниже просто не дает считать контент сообщений в случае режима info и выше
         if self.logger.isEnabledFor(logging.DEBUG):
@@ -20,11 +20,26 @@ class test_broker(Basic_Broker):
             self.logger.debug(f'Баланс : {state.balance}.')
             self.logger.debug(f'Количество позиций: {sum(map(len, state.positions.values()))},')
             self.logger.debug(f'из которых уникальных инструментов: {len(state.positions)}.')
-
+ 
+    def mark_to_market(self, current_state, last_row):
+        new_state = current_state.copy()
+        self.logger.debug('Зашел в mark_to_market')
+ 
+        for instrument, positions in new_state.positions.items():
+            current_price = last_row[(instrument, 'close')]
+            for position in positions:
+                pnl_delta = (current_price - position.last_mark_price) * position.amount * position.direction
+                position.locked_amount += pnl_delta   
+                position.last_mark_price = current_price
+ 
+        self._log_state('После переоценки.', new_state)
+        self.logger.debug('Вышел из mark_to_market')
+        return new_state
+ 
     def check_response(self,current_state,response,last_row):
         new_state = current_state.copy()
         self._log_state('Перед обработкой запроса.',new_state)
-
+ 
         if isinstance(response, Wait):
             self.logger.debug('Получил wait')
             self._log_state('После обработки запроса.',new_state)
@@ -33,56 +48,57 @@ class test_broker(Basic_Broker):
         
         if isinstance(response, Close_all):
             self.logger.debug('Получил close all')
-
+ 
             for instrument, decision in current_state.positions.items():
                 last_price = last_row[(instrument, 'close')]
                 if instrument in new_state.positions:
                     positions = new_state.positions[instrument]
                 else:
                     positions = []
-
+ 
                 for position in positions[:]:
-                    positions.remove(position) 
-                    new_state.balance += position.amount * last_price*(1 - self.commissions - self.slippage)
-
+                    positions.remove(position)
+                    new_state.margin += position.locked_amount
+                    new_state.margin -= position.amount * last_price * (self.commissions + self.slippage)
+ 
                 new_state.positions[instrument] = positions
                 if not new_state.positions[instrument]: del new_state.positions[instrument]
-
+ 
             self._log_state('После обработки запроса.',new_state)
             self.logger.debug('Выхожу из check_response')
             return new_state
         
         if isinstance(response, Mixed_response):
             self.logger.debug('Получил Mixed response')
-
+ 
             for instrument, decision in response.positions.items():
-
+ 
                 pos_list = new_state.positions.get(instrument, [])
-
+ 
                 if type(decision) == type(instr_Wait()):
                     continue
-
+ 
                 if len(pos_list)>2:
                     continue
-
+ 
                 if decision.direction == 1:
-
+ 
                     position = Position(1,
                                         volume = decision.volume,
                                         entry_price = decision.entry_price,
                                         take_profit =  decision.take_profit,
                                         stop_loss =  decision.stop_loss)
                     
-                    new_state.balance -= decision.volume * (1 + self.commissions + self.slippage)
+                    new_state.margin -= decision.volume * (1 + self.commissions + self.slippage)
                     pos_list.append(position)
-
+ 
                 elif decision.direction == -1:
                     position = Position(-1,
                                         volume = decision.volume,
                                         entry_price = decision.entry_price,
                                         take_profit = decision.take_profit,
                                         stop_loss = decision.stop_loss)
-                    new_state.balance -= decision.volume * (1 + self.commissions + self.slippage)
+                    new_state.margin -= decision.volume * (1 + self.commissions + self.slippage)
                     pos_list.append(position)
                 else:
                     raise ValueError('Неправильно заданый ответ стратегии')
@@ -91,20 +107,20 @@ class test_broker(Basic_Broker):
             self._log_state('После обработки запроса.',new_state)
             self.logger.debug('Выхожу из check_response')
             return new_state
-
+ 
         raise ValueError('up to this moment every response must be processed')
     
     def check_position(self, current_state, data):
         new_state = current_state.copy()
         self.logger.debug('Зашел в check_position')
-
+ 
         comparasing = False
-
+ 
         for instrument, positions in new_state.positions.items():
-
+ 
             last_price = data[instrument]['close'].to_list()[-1]
             positions = positions
-
+ 
             for position in positions[:]:
                 current_direction = position.direction
                 stop_loss = position.stop_loss
@@ -113,24 +129,26 @@ class test_broker(Basic_Broker):
                     if last_price < stop_loss or last_price > take_profit:
                         self.logger.debug(f'Удаляю позицию из {instrument}')
                         comparasing = True
-
-                        positions.remove(position) 
-                        new_state.balance += position.amount * last_price*(1 - self.commissions - self.slippage)
+ 
+                        positions.remove(position)
+                        new_state.margin += position.locked_amount
+                        new_state.margin -= position.amount * last_price * (self.commissions + self.slippage)
                 elif current_direction == -1:
                     if last_price > stop_loss or last_price < take_profit:
                         self.logger.debug(f'Удаляю позицию из {instrument}')
                         comparasing = True
-
-                        positions.remove(position) 
-                        new_state.balance += position.amount * last_price*(1 - self.commissions -  self.slippage)
+ 
+                        positions.remove(position)
+                        new_state.margin += position.locked_amount
+                        new_state.margin -= position.amount * last_price * (self.commissions + self.slippage)
                 else: 
                     pass
-
+ 
             new_state.positions[instrument] = positions
-
+ 
         if comparasing:
             self._log_state('До удаления позиций',current_state)
             self._log_state('После удаления позиций',new_state)
-
+ 
         self.logger.debug('Вышел из check_position')
         return new_state
