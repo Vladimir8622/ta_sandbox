@@ -29,7 +29,7 @@ class test_broker(Basic_Broker):
             current_price = last_row[(instrument, 'close')]
             for position in positions:
                 pnl_delta = (current_price - position.last_mark_price) * position.amount * position.direction
-                new_state.margin += pnl_delta
+                position.locked_amount += pnl_delta   
                 position.last_mark_price = current_price
  
         self._log_state('После переоценки.', new_state)

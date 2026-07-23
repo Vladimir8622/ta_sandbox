@@ -167,7 +167,7 @@ for i in range(min_length, len(data)):
     new_state = broker.mark_to_market(current_state=current_state,
                                        last_row=last_row)
 
-    new_state = broker.check_response(current_state=current_state,
+    new_state = broker.check_response(current_state=new_state,
                                        response=response,
                                        last_row=last_row)
 
