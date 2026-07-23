@@ -1,14 +1,21 @@
+import sys
+from pathlib import Path
+if __name__ == "__main__":
+    root_dir = Path(__file__).parent.parent
+    sys.path.insert(0, str(root_dir))
+
 import data_management.Data_manager as dm
 from Brokers.test_broker import test_broker
 from Responses.Close_all import Close_all
 from Responses.Open_Position import Open_Position
 from Responses.Wait import Wait
-from State import State
+from core.State import State
 import argparse
 import json
 import pandas as pd
 import sys
 import importlib.util
+
 
 import logging
 

@@ -193,7 +193,7 @@ def objective(trial,data_params,brokers_params,strategy_params, strategy_info):
         'info': strategy_info
     }
     
-    command = [sys.executable, 'Engine.py', '--params', json.dumps(all_params)]
+    command = [sys.executable, 'core/Engine.py', '--params', json.dumps(all_params)]
     
     result = subprocess.run(command, capture_output=True, text=True)
 

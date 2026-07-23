@@ -1,5 +1,5 @@
 from Brokers.Basic_Broker import Basic_Broker
-from Position import Position
+from core.Position import Position
 from Responses.Wait import Wait
 from Responses.Close_all import Close_all
 from Responses.Mixed_response import Mixed_response

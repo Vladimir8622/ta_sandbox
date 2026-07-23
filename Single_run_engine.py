@@ -137,7 +137,7 @@ all_params = {
         'info': strategy_info
     }
 
-command = [sys.executable, 'Engine.py', '--params', json.dumps(all_params), '--logs']
+command = [sys.executable, 'core/Engine.py', '--params', json.dumps(all_params), '--logs']
 result = subprocess.run(command, capture_output=True, text=True)
 print("=== DEBUG ===")
 print("Return code:", result.returncode)
