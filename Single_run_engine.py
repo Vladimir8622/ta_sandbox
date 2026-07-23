@@ -1,6 +1,7 @@
 import subprocess
 import json
 import matplotlib.pyplot as plt
+import pandas as pd
 import csv
 from datetime import datetime
 import sys
@@ -148,15 +149,7 @@ if result.returncode == 0:
     output = json.loads(result.stdout)
     logs = output.get('logs', [])
     if logs:
-        # График баланса
-        balances = [entry['balance'] for entry in logs]
-        plt.figure(figsize=(12,6))
-        plt.plot(balances)
-        plt.title('Equity Curve')
-        plt.savefig('equity.png')
-        plt.show()
-
-        # Определяем сделки по каждому инструменту
+        # Определяем сделки по каждому инструменту (нужно ДО графика, чтобы отметить точки входа/выхода)
         trades = []
         open_trades = {}  # instrument -> open_trade_info
 
@@ -205,6 +198,44 @@ if result.returncode == 0:
             trade['close_time'] = None
             trade['pnl'] = None
             trades.append(trade)
+
+        # График equity + просадка + отметки входа/выхода по сделкам
+        dates = pd.to_datetime([entry['datetime'] for entry in logs])
+        balances = pd.Series([entry['balance'] for entry in logs], index=dates)
+        margins = pd.Series([entry['margin'] for entry in logs], index=dates)
+
+        running_max = balances.cummax()
+        drawdown = (balances - running_max) / running_max * 100
+
+        fig, (ax_equity, ax_dd) = plt.subplots(
+            2, 1, figsize=(12, 7), sharex=True,
+            gridspec_kw={'height_ratios': [3, 1]}
+        )
+
+        ax_equity.plot(balances.index, balances.values, color='tab:blue', linewidth=1.2, label='Balance (equity)')
+        ax_equity.plot(margins.index, margins.values, color='tab:orange', linewidth=1.2, linestyle='--', label='Margin (свободные деньги)')
+
+        # маркеры входа (зелёный треугольник вверх) и выхода (красный треугольник вниз)
+        open_times = pd.to_datetime([t['open_time'] for t in trades if t['open_time']])
+        close_times = pd.to_datetime([t['close_time'] for t in trades if t.get('close_time')])
+        if len(open_times):
+            ax_equity.scatter(open_times, balances.reindex(open_times, method='nearest'),
+                               marker='^', color='green', s=40, label='Открытие', zorder=3)
+        if len(close_times):
+            ax_equity.scatter(close_times, balances.reindex(close_times, method='nearest'),
+                               marker='v', color='red', s=40, label='Закрытие', zorder=3)
+
+        ax_equity.set_title('Balance & Margin')
+        ax_equity.set_ylabel('Деньги')
+        ax_equity.legend(loc='upper left')
+        ax_equity.grid(alpha=0.3)
+
+
+
+        fig.autofmt_xdate()
+        fig.tight_layout()
+        fig.savefig('equity.png', dpi=150)
+        plt.show()
 
         # Сохраняем сделки в CSV
         with open('trades_log.csv', 'w', newline='', encoding='utf-8') as f:

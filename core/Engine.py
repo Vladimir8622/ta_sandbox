@@ -6,10 +6,10 @@ if __name__ == "__main__":
 
 import data_management.Data_manager as dm
 from Brokers.test_broker import test_broker
-from responses.global_response.Close_all import Close_all
-from responses.instrument_response.instr_open_position import Open_Position
-from responses.global_response.Wait import Wait
-from responses.instrument_response.instr_wait import instr_Wait
+from Responses.global_response.Close_all import Close_all
+from Responses.instrument_response.instr_open_position import Open_Position
+from Responses.global_response.Wait import Wait
+from Responses.instrument_response.instr_wait import instr_Wait
 from core.State import State
 import argparse
 import json
@@ -56,6 +56,8 @@ def create_logs(response,new_state,datetime):
     current_line = {
         'datetime': datetime,  # сохраняем как строку для JSON
         'balance': new_state.balance,
+        'margin': new_state.margin,     # свободные деньги
+
         # 'decisions': decisions_dict,   # словарь решений по инструментам
         'positions': positions_dict    # словарь позиций по инструментам
     }
@@ -161,6 +163,9 @@ for i in range(min_length, len(data)):
     logger.debug(current_state.balance)
     
     last_row = data.iloc[i]
+
+    new_state = broker.mark_to_market(current_state=current_state,
+                                       last_row=last_row)
 
     new_state = broker.check_response(current_state=current_state,
                                        response=response,

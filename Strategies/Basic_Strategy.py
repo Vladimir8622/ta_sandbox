@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from responses.Basic_Response import Response
+from Responses.Basic_Response import Response
 
 class Basic_Strategy(ABC):
 

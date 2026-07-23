@@ -1,4 +1,4 @@
-from responses.Basic_Response import Response
+from Responses.Basic_Response import Response
 
 class Wait(Response):
     def __init__(self, period = 1):
