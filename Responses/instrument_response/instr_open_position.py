@@ -1,5 +1,5 @@
 
-from Responses.Basic_Response import Response
+from responses.Basic_Response import Response
 
 class Open_Position(Response):
     def __init__(self, direction, volume, entry_price, take_profit, stop_loss):

@@ -2,10 +2,11 @@ import numpy as np
 from numba import njit
 
 from Strategies.Basic_Strategy import Basic_Strategy
-from Responses.Open_Position import Open_Position
-from Responses.Wait import Wait
-from Responses.Close_all import Close_all
-from Responses.Mixed_response import Mixed_response
+from responses.instrument_response.instr_open_position import Open_Position
+from responses.global_response.Wait import Wait
+from responses.instrument_response.instr_wait import instr_Wait
+from responses.global_response.Close_all import Close_all
+from responses.global_response.Mixed_response import Mixed_response
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -87,7 +88,7 @@ class Portfolio_strategy(Basic_Strategy):
             weight = weights.get(instrument, 0)
             
             if weight <= 0:
-                decisions[instrument] = Wait()
+                decisions[instrument] = instr_Wait()
             else:
                 price = last_prices[instrument]
                 

@@ -1,8 +1,9 @@
 from Brokers.Basic_Broker import Basic_Broker
 from core.Position import Position
-from Responses.Wait import Wait
-from Responses.Close_all import Close_all
-from Responses.Mixed_response import Mixed_response
+from responses.global_response.Wait import Wait
+from responses.instrument_response.instr_wait import instr_Wait
+from responses.global_response.Close_all import Close_all
+from responses.global_response.Mixed_response import Mixed_response
 import logging
 
 class test_broker(Basic_Broker):
@@ -58,7 +59,7 @@ class test_broker(Basic_Broker):
 
                 pos_list = new_state.positions.get(instrument, [])
 
-                if type(decision) == type(Wait()):
+                if type(decision) == type(instr_Wait()):
                     continue
 
                 if len(pos_list)>2:

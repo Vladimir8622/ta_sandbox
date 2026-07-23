@@ -1,6 +1,7 @@
 from Strategies.Basic_Strategy import Basic_Strategy
-from Responses.Open_Position import Open_Position
-from Responses.Wait import Wait
+from responses.instrument_response.instr_open_position import Open_Position
+from responses.global_response.Mixed_response import Mixed_response
+from responses.instrument_response.instr_wait import instr_Wait
 import random
 
 
@@ -45,6 +46,6 @@ class Test_strategy(Basic_Strategy):
             price = price = data_to_process[self.Name]['close'].iloc[-2]
             decison = Open_Position(1,1,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price*(1-self.stop_loss_percent))
         else:
-            decison = Wait()
+            decison = instr_Wait()
         
-        return {self.Name:decison}
+        return Mixed_response({self.Name:decison})

@@ -6,9 +6,10 @@ if __name__ == "__main__":
 
 import data_management.Data_manager as dm
 from Brokers.test_broker import test_broker
-from Responses.Close_all import Close_all
-from Responses.Open_Position import Open_Position
-from Responses.Wait import Wait
+from responses.global_response.Close_all import Close_all
+from responses.instrument_response.instr_open_position import Open_Position
+from responses.global_response.Wait import Wait
+from responses.instrument_response.instr_wait import instr_Wait
 from core.State import State
 import argparse
 import json
