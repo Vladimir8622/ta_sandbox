@@ -60,7 +60,8 @@ args = parser.parse_args()
 params = json.loads(args.params)
 
 # Включаем логгирование для проверку результатов оптимизации
-logger = logging.getLogger(__name__)
+logger_name = 'ENGINE'
+logger = logging.getLogger(logger_name)
 logger.setLevel(logging.DEBUG)
 
 if args.logs:
@@ -127,7 +128,7 @@ brokers_info = params['brokers']
 
 commissions = brokers_info['commissions']
 slippage = brokers_info['slippage']
-broker = test_broker(commissions=commissions, slippage=slippage) 
+broker = test_broker(commissions=commissions, slippage=slippage, main_logger_name=logger_name) 
 
 
 initial_balance = 100 #начальный баланс
@@ -140,6 +141,7 @@ min_length = strategy.get_min_data_length()
 logger.debug('Начинаю цикл по свечам')
 
 for i in range(min_length, len(data)):
+    logger.debug('New bar!')
 
     history = data[:i+1]
 
@@ -172,6 +174,7 @@ for i in range(min_length, len(data)):
                                    datetime = data.index[i].isoformat())
         logs.append(current_line)
 
+    logger.debug('end of processing bar')
 
 def calculate_metrics(states):
     if not states:
