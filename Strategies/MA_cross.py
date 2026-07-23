@@ -2,9 +2,9 @@ import numpy as np
 from numba import njit
 
 from Strategies.Basic_Strategy import Basic_Strategy
-from responses.instrument_response.instr_open_position import Open_Position
-from responses.global_response.Mixed_response import Mixed_response
-from responses.instrument_response.instr_wait import instr_Wait
+from Responses.instrument_response.instr_open_position import Open_Position
+from Responses.global_response.Mixed_response import Mixed_response
+from Responses.instrument_response.instr_wait import instr_Wait
 
 
 @njit(cache=True)
