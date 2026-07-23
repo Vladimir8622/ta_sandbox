@@ -199,42 +199,19 @@ if result.returncode == 0:
             trade['pnl'] = None
             trades.append(trade)
 
-        # График equity + просадка + отметки входа/выхода по сделкам
+        # График: баланс и маржа на одном листе
         dates = pd.to_datetime([entry['datetime'] for entry in logs])
         balances = pd.Series([entry['balance'] for entry in logs], index=dates)
         margins = pd.Series([entry['margin'] for entry in logs], index=dates)
 
-        running_max = balances.cummax()
-        drawdown = (balances - running_max) / running_max * 100
-
-        fig, (ax_equity, ax_dd) = plt.subplots(
-            2, 1, figsize=(12, 7), sharex=True,
-            gridspec_kw={'height_ratios': [3, 1]}
-        )
-
-        ax_equity.plot(balances.index, balances.values, color='tab:blue', linewidth=1.2, label='Balance (equity)')
-        ax_equity.plot(margins.index, margins.values, color='tab:orange', linewidth=1.2, linestyle='--', label='Margin (свободные деньги)')
-
-        # маркеры входа (зелёный треугольник вверх) и выхода (красный треугольник вниз)
-        open_times = pd.to_datetime([t['open_time'] for t in trades if t['open_time']])
-        close_times = pd.to_datetime([t['close_time'] for t in trades if t.get('close_time')])
-        if len(open_times):
-            ax_equity.scatter(open_times, balances.reindex(open_times, method='nearest'),
-                               marker='^', color='green', s=40, label='Открытие', zorder=3)
-        if len(close_times):
-            ax_equity.scatter(close_times, balances.reindex(close_times, method='nearest'),
-                               marker='v', color='red', s=40, label='Закрытие', zorder=3)
-
-        ax_equity.set_title('Balance & Margin')
-        ax_equity.set_ylabel('Деньги')
-        ax_equity.legend(loc='upper left')
-        ax_equity.grid(alpha=0.3)
-
-
-
-        fig.autofmt_xdate()
-        fig.tight_layout()
-        fig.savefig('equity.png', dpi=150)
+        plt.figure(figsize=(12, 6))
+        plt.plot(balances.index, balances.values, color='red', linewidth=1.2, label='Balance')
+        plt.plot(margins.index, margins.values, color='blue', linewidth=1.2, label='Margin')
+        plt.title('Equity Curve')
+        plt.legend(loc='upper left')
+        plt.gcf().autofmt_xdate()
+        plt.tight_layout()
+        plt.savefig('equity.png', dpi=150)
         plt.show()
 
         # Сохраняем сделки в CSV
