@@ -123,11 +123,10 @@ class test_broker(Basic_Broker):
                     pos_list.append(position)
  
                 elif decision.direction == -1:
-                    position = Position(-1,
-                                        volume = decision.volume,
-                                        entry_price = decision.entry_price,
-                                        take_profit = decision.take_profit,
-                                        stop_loss = decision.stop_loss)
+ 
+                    order = self._response_to_order(instrument, decision)
+                    position = self.execute_order(order, last_row)
+                    
                     new_state.margin -= decision.volume * (1 + self.commissions + self.slippage)
                     pos_list.append(position)
                 else:

@@ -7,11 +7,6 @@ from core.orders.enums import Side, OrderStatus, OrderType
 class Order:
     def __init__(self, symbol, side, volume, order_type,
                  take_profit=None, stop_loss=None):
-        if not isinstance(side, Side):
-            raise ValueError(f"side must be Side, got {side!r}")
-        if quantity <= 0:
-            raise ValueError("quantity must be positive")
-
         self.id = str(uuid4())
         self.symbol = symbol
         self.side = side
