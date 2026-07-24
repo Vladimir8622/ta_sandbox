@@ -1,10 +1,12 @@
 from Brokers.Basic_Broker import Basic_Broker
 from core.Position import Position
-from Responses.global_response.Wait import Wait
-from Responses.instrument_response.instr_wait import instr_Wait
-from Responses.global_response.Close_all import Close_all
-from Responses.global_response.Mixed_response import Mixed_response
+from responses.global_response.Wait import Wait
+from responses.instrument_response.instr_wait import instr_Wait
+from responses.global_response.Close_all import Close_all
+from responses.global_response.Mixed_response import Mixed_response
 import logging
+from core.orders.enums import OrderType, Side, OrderStatus
+from core.orders.market_order import MarketOrder
 
 class test_broker(Basic_Broker):
     def __init__(self, commissions, slippage, main_logger_name):
@@ -35,6 +37,37 @@ class test_broker(Basic_Broker):
         self._log_state('После переоценки.', new_state)
         self.logger.debug('Вышел из mark_to_market')
         return new_state
+
+    def _response_to_order(self, instrument, decision):
+        self.logger.debug('Зашел в response_to_order')
+
+        # decision — это Open_Position из responses/instrument_response
+        side = Side.BUY if decision.direction == 1 else Side.SELL
+        self.logger.debug('Вышел из response_to_order')
+
+        return MarketOrder(symbol=instrument,
+                            side=side,
+                            volume=decision.volume,
+                            take_profit=decision.take_profit,
+                            stop_loss=decision.stop_loss)
+
+    def execute_order(self, order, last_row):
+        self.logger.debug('Зашел в execute_order')
+
+        if order.order_type != OrderType.MARKET:
+            raise NotImplementedError(order.order_type)
+
+        price = last_row[(order.symbol, 'close')]
+        order.fill(price)
+
+        direction = 1 if order.side == Side.BUY else -1
+        self.logger.debug('Вышел из execute_order')
+
+        return Position(direction,
+                        volume=order.filled_volume,
+                        entry_price=order.filled_price,
+                        take_profit=order.take_profit,
+                        stop_loss=order.stop_loss)
  
     def check_response(self,current_state,response,last_row):
         new_state = current_state.copy()
@@ -83,21 +116,17 @@ class test_broker(Basic_Broker):
  
                 if decision.direction == 1:
  
-                    position = Position(1,
-                                        volume = decision.volume,
-                                        entry_price = decision.entry_price,
-                                        take_profit =  decision.take_profit,
-                                        stop_loss =  decision.stop_loss)
+                    order = self._response_to_order(instrument, decision)
+                    position = self.execute_order(order, last_row)
                     
                     new_state.margin -= decision.volume * (1 + self.commissions + self.slippage)
                     pos_list.append(position)
  
                 elif decision.direction == -1:
-                    position = Position(-1,
-                                        volume = decision.volume,
-                                        entry_price = decision.entry_price,
-                                        take_profit = decision.take_profit,
-                                        stop_loss = decision.stop_loss)
+ 
+                    order = self._response_to_order(instrument, decision)
+                    position = self.execute_order(order, last_row)
+                    
                     new_state.margin -= decision.volume * (1 + self.commissions + self.slippage)
                     pos_list.append(position)
                 else:
