@@ -22,9 +22,11 @@ def run_engine(config: dict) -> None:
 
     equity_filename = config.get('output', {}).get('equity_plot', 'equity.png')
     trades_filename = config.get('output', {}).get('trades_csv', 'trades_log.csv')
-    
+    orders_filename = config.get('output', {}).get('orders_csv', 'orders_log.csv')
+
     equity_plot_path = os.path.join(run_dir, equity_filename)
     trades_csv_path = os.path.join(run_dir, trades_filename)
+    orders_csv_path = os.path.join(run_dir, orders_filename)
 
     # Формируем словарь для передачи в Engine
     all_params = {
@@ -72,11 +74,26 @@ def run_engine(config: dict) -> None:
 
     trades = []
     open_trades = {}  # instrument -> trade_info
+    orders = []
 
     for entry in logs:
         dt = entry['datetime']
         current_positions = entry['positions']  # dict {instr: [pos_dict, ...]}
         balance = entry['balance']
+        
+        for order in entry.get("pending_orders", []):
+            orders.append({
+                "open_time": dt,
+                "symbol": order["symbol"],
+                "side": order["side"],
+                "volume": order["volume"],
+                "order_type": order["order_type"],
+                "limit_price": order["limit_price"],
+                "trigger_price": order["trigger_price"],
+                "linked_position_id": order["linked_position_id"],
+                "take_profit": order["take_profit"],
+                "stop_loss": order["stop_loss"],
+            })
 
         instruments_with_pos = set(current_positions.keys())
 
@@ -135,7 +152,7 @@ def run_engine(config: dict) -> None:
     plt.savefig(equity_plot_path, dpi=150)
     plt.show()
 
-    # --- Сохранение сделок в CSV ---
+    # --- Сохранение сделок и ордеров в CSV ---
     with open(trades_csv_path, 'w', newline='', encoding='utf-8') as f:
         fieldnames = ['instrument', 'open_time', 'direction', 'volume', 'entry_price',
                       'take_profit', 'stop_loss', 'close_time', 'pnl', 'open_balance']
@@ -143,7 +160,17 @@ def run_engine(config: dict) -> None:
         writer.writeheader()
         writer.writerows(trades)
 
+    with open(orders_csv_path, 'w', newline='', encoding='utf-8') as f:
+        fieldnames = ["open_time","symbol","side","volume","order_type","limit_price","trigger_price","linked_position_id",
+    "take_profit","stop_loss",]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(orders)
+
+
+    print(f"Записано {len(orders)} ордеров в {orders_csv_path}")
     print(f"Записано {len(trades)} сделок в {trades_csv_path}")
+
     print(f"График сохранён как {equity_plot_path}")
 
     # --- Сохранение сводки (summary) ---
@@ -208,7 +235,7 @@ def run_engine(config: dict) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Single run of trading engine")
-    parser.add_argument('--config', type=str, default=r'configs\single_run\portfolio_strategy.yaml',
+    parser.add_argument('--config', type=str, default=r'configs\single_run\demo_strategy.yaml',
                         help='Path to YAML configuration file')
     args = parser.parse_args()
  

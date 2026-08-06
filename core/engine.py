@@ -51,16 +51,30 @@ def create_logs(response,new_state,datetime):
                 'stop_loss': pos.stop_loss,
                 'amount': pos.amount
             })
+
+    pending_orders_dict = []
+
+    for order in new_state.pending_orders:
+        pending_orders_dict.append({
+                "symbol": order.symbol,
+                "side": order.side,
+                "volume": order.volume,
+                "order_type": order.order_type,
+                "limit_price": order.limit_price,
+                "trigger_price": order.trigger_price,
+                "linked_position_id": order.linked_position_id,
+                "take_profit": order.take_profit,
+                "stop_loss": order.stop_loss,
+        })
     
     # 3. Формируем запись лога
     current_line = {
-        'datetime': datetime,  # сохраняем как строку для JSON
-        'balance': new_state.balance,
-        'margin': new_state.margin,     # свободные деньги
-
-        # 'decisions': decisions_dict,   # словарь решений по инструментам
-        'positions': positions_dict    # словарь позиций по инструментам
-    }
+            'datetime': datetime,
+            'balance': new_state.balance,
+            'margin': new_state.margin,
+            'positions': positions_dict,
+            'pending_orders': pending_orders_dict,
+        }
     return current_line
 
 parser = argparse.ArgumentParser()
