@@ -6,11 +6,16 @@ class Position:
         self.amount = volume / entry_price
         self.stop_loss = stop_loss
         self.take_profit = take_profit
-        self.locked_amount = volume        #заморожено
+        self.locked_volume = volume 
         self.last_mark_price = entry_price 
 
     def copy(self):
-        new_pos = Position(self.direction, self.volume, self.entry_price, self.take_profit, self.stop_loss)
-        new_pos.locked_amount = self.locked_amount
+        new_pos = Position(
+            direction = self.direction,
+            volume = self.volume,
+            entry_price = self.entry_price,
+            take_profit = self.take_profit,
+            stop_loss = self.stop_loss)
+        new_pos.locked_volume = self.locked_volume
         new_pos.last_mark_price = self.last_mark_price
         return new_pos

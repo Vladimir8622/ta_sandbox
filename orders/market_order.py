@@ -1,5 +1,5 @@
-from core.orders.order import Order
-from core.orders.enums import OrderType
+from orders.order import Order
+from orders.enums import OrderType
 
 
 class MarketOrder(Order):

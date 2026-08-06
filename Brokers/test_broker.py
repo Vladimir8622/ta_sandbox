@@ -5,8 +5,8 @@ from responses.instrument_response.instr_wait import instr_Wait
 from responses.global_response.Close_all import Close_all
 from responses.global_response.Mixed_response import Mixed_response
 import logging
-from core.orders.enums import OrderType, Side, OrderStatus
-from core.orders.market_order import MarketOrder
+from orders.enums import OrderType, Side, OrderStatus
+from orders.market_order import MarketOrder
 
 class test_broker(Basic_Broker):
     def __init__(self, commissions, slippage, main_logger_name):
@@ -31,7 +31,7 @@ class test_broker(Basic_Broker):
             current_price = last_row[(instrument, 'close')]
             for position in positions:
                 pnl_delta = (current_price - position.last_mark_price) * position.amount * position.direction
-                position.locked_amount += pnl_delta   
+                position.locked_volume += pnl_delta   
                 position.last_mark_price = current_price
  
         self._log_state('После переоценки.', new_state)
@@ -91,7 +91,7 @@ class test_broker(Basic_Broker):
  
                 for position in positions[:]:
                     positions.remove(position)
-                    new_state.margin += position.locked_amount
+                    new_state.margin += position.locked_volume
                     new_state.margin -= position.amount * last_price * (self.commissions + self.slippage)
  
                 new_state.positions[instrument] = positions
@@ -114,15 +114,7 @@ class test_broker(Basic_Broker):
                 if len(pos_list)>2:
                     continue
  
-                if decision.direction == 1:
- 
-                    order = self._response_to_order(instrument, decision)
-                    position = self.execute_order(order, last_row)
-                    
-                    new_state.margin -= decision.volume * (1 + self.commissions + self.slippage)
-                    pos_list.append(position)
- 
-                elif decision.direction == -1:
+                if decision.direction in (1,-1):
  
                     order = self._response_to_order(instrument, decision)
                     position = self.execute_order(order, last_row)
@@ -160,7 +152,7 @@ class test_broker(Basic_Broker):
                         comparasing = True
  
                         positions.remove(position)
-                        new_state.margin += position.locked_amount
+                        new_state.margin += position.locked_volume
                         new_state.margin -= position.amount * last_price * (self.commissions + self.slippage)
                 elif current_direction == -1:
                     if last_price > stop_loss or last_price < take_profit:
@@ -168,7 +160,7 @@ class test_broker(Basic_Broker):
                         comparasing = True
  
                         positions.remove(position)
-                        new_state.margin += position.locked_amount
+                        new_state.margin += position.locked_volume
                         new_state.margin -= position.amount * last_price * (self.commissions + self.slippage)
                 else: 
                     pass

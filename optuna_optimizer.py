@@ -165,7 +165,7 @@ necessary_instr_num = MyClass.get_data_requirements()['num_of_instrument']
 
 # Внимательно тут надо смотреть, что сообщаем и кому.
 if len(data_params) != 1 and necessary_instr_num == 'single':
-    ValueError("incorrect num of instrument for this strategy")
+    raise ValueError("incorrect num of instrument for this strategy")
 
 strategy_params = MyClass.get_strategy_params()
 

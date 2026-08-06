@@ -1,7 +1,7 @@
 from uuid import uuid4
 from datetime import datetime
 
-from core.orders.enums import Side, OrderStatus, OrderType
+from orders.enums import Side, OrderStatus, OrderType
 
 
 class Order:
@@ -19,7 +19,7 @@ class Order:
         self.created_at = datetime.now()
 
         self.filled_price = None
-        self.filled_quantity = 0
+        self.filled_volume = 0
         self.filled_at = None
 
     def fill(self, price, volume=None):

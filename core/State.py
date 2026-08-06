@@ -5,7 +5,7 @@ class State:
 
     @property
     def balance(self):
-        locked = sum(pos.locked_amount for pos_list in self.positions.values() for pos in pos_list)
+        locked = sum(pos.locked_volume for pos_list in self.positions.values() for pos in pos_list)
         return self.margin + locked
 
     def copy(self):
