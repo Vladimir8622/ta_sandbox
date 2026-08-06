@@ -8,6 +8,7 @@ from datetime import datetime
 import yaml
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
 
 def load_config(config_path: str) -> dict:
     with open(config_path, 'r', encoding='utf-8') as f:
@@ -16,39 +17,52 @@ def load_config(config_path: str) -> dict:
 
 def run_engine(config: dict) -> None:
 
+    run_dir = fr"single_run_res\{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+    os.makedirs(run_dir, exist_ok=True)
+
+    equity_filename = config.get('output', {}).get('equity_plot', 'equity.png')
+    trades_filename = config.get('output', {}).get('trades_csv', 'trades_log.csv')
+    
+    equity_plot_path = os.path.join(run_dir, equity_filename)
+    trades_csv_path = os.path.join(run_dir, trades_filename)
+
     # Формируем словарь для передачи в Engine
     all_params = {
         'instruments': config['instruments'],
         'brokers': config['brokers'],
         'strategy': config['strategy'],
-        'info': config['strategy_info']
+        'info': config['strategy_info'],
+        'dir': run_dir
     }
 
     # Команда запуска
     command = [
         sys.executable,
-        'core/Engine.py',
+        'core/engine.py',
         '--params', json.dumps(all_params),
         '--logs'
     ]
 
     result = subprocess.run(command, capture_output=True, text=True)
 
+    try:
+        output = json.loads(result.stdout)
+    except json.JSONDecodeError as e:
+        print(f"Ошибка парсинга JSON из stdout Engine: {e}")
+        return
+
+    print_output = output.copy()
+    print_output.pop('logs',None)
+
     # Отладка
     print("=== DEBUG ===")
     print("Return code:", result.returncode)
-    print("STDOUT:", repr(result.stdout))
+    print("STDOUT:", print_output)
     print("STDERR:", repr(result.stderr))
     print("=== END DEBUG ===")
 
     if result.returncode != 0:
         print("Engine завершился с ошибкой. Выход.")
-        return
-
-    try:
-        output = json.loads(result.stdout)
-    except json.JSONDecodeError as e:
-        print(f"Ошибка парсинга JSON из stdout Engine: {e}")
         return
 
     logs = output.get('logs', [])
@@ -118,21 +132,79 @@ def run_engine(config: dict) -> None:
     plt.tight_layout()
 
     # Сохранение графика
-    equity_plot = config.get('output', {}).get('equity_plot', 'equity.png')
-    plt.savefig(equity_plot, dpi=150)
+    plt.savefig(equity_plot_path, dpi=150)
     plt.show()
 
     # --- Сохранение сделок в CSV ---
-    trades_csv = config.get('output', {}).get('trades_csv', 'trades_log.csv')
-    with open(trades_csv, 'w', newline='', encoding='utf-8') as f:
+    with open(trades_csv_path, 'w', newline='', encoding='utf-8') as f:
         fieldnames = ['instrument', 'open_time', 'direction', 'volume', 'entry_price',
                       'take_profit', 'stop_loss', 'close_time', 'pnl', 'open_balance']
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(trades)
 
-    print(f"Записано {len(trades)} сделок в {trades_csv}")
-    print(f"График сохранён как {equity_plot}")
+    print(f"Записано {len(trades)} сделок в {trades_csv_path}")
+    print(f"График сохранён как {equity_plot_path}")
+
+    # --- Сохранение сводки (summary) ---
+    summary_path = os.path.join(run_dir, 'summary.txt')
+    with open(summary_path, 'w', encoding='utf-8') as f:
+        f.write("=== TRADING ENGINE SUMMARY ===\n")
+        f.write(f"Run started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        
+        # Информация о стратегии
+        f.write(f"Strategy params: {config.get('strategy', 'N/A')}\n")
+        f.write(f"Instruments: {config.get('instruments', [])}\n")
+        f.write(f"Brokers: {config.get('brokers', [])}\n")
+        if 'strategy_info' in config:
+            f.write(f"Strategy info: {config['strategy_info']}\n")
+        f.write("\n")
+
+        # Данные из логов
+        if logs:
+            start_time = logs[0]['datetime']
+            end_time = logs[-1]['datetime']
+            start_balance = logs[0]['balance']
+            end_balance = logs[-1]['balance']
+            f.write(f"Start time: {start_time}\n")
+            f.write(f"End time: {end_time}\n")
+            f.write(f"Initial balance: {start_balance:.2f}\n")
+            f.write(f"Final balance: {end_balance:.2f}\n")
+            f.write(f"Total return: {(end_balance/start_balance - 1)*100:.2f}%\n")
+        else:
+            f.write("No log entries found.\n")
+
+        # Статистика по закрытым сделкам
+        closed_trades = [t for t in trades if t['close_time'] is not None]
+        if closed_trades:
+            pnls = [t['pnl'] for t in closed_trades if t['pnl'] is not None]
+            if pnls:
+                total_pnl = sum(pnls)
+                avg_pnl = total_pnl / len(pnls)
+                max_pnl = max(pnls)
+                min_pnl = min(pnls)
+                winning_trades = [p for p in pnls if p > 0]
+                losing_trades = [p for p in pnls if p < 0]
+                f.write(f"\n=== TRADES STATISTICS ===\n")
+                f.write(f"Total closed trades: {len(closed_trades)}\n")
+                f.write(f"Winning trades: {len(winning_trades)}\n")
+                f.write(f"Losing trades: {len(losing_trades)}\n")
+                f.write(f"Win rate: {len(winning_trades)/len(closed_trades)*100:.2f}%\n")
+                f.write(f"Total PnL: {total_pnl:.2f}\n")
+                f.write(f"Average PnL: {avg_pnl:.2f}\n")
+                f.write(f"Max profit: {max_pnl:.2f}\n")
+                f.write(f"Max loss: {min_pnl:.2f}\n")
+            else:
+                f.write("\nNo closed trades with valid PnL.\n")
+        else:
+            f.write("\nNo closed trades.\n")
+
+        # Незакрытые позиции
+        open_trades_count = len([t for t in trades if t['close_time'] is None])
+        if open_trades_count:
+            f.write(f"\nOpen positions remaining: {open_trades_count}\n")
+
+    print(f"Сводка сохранена в {summary_path}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Single run of trading engine")

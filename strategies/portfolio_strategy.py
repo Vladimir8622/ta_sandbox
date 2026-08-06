@@ -28,6 +28,8 @@ class Portfolio_strategy(Basic_Strategy):
         self.rebalance_period = kwargs['rebalance_period']
         self.max_lot = kwargs['max_lot']
 
+        self.min_data_length = 100
+
         self.bar_count = 0            
         self.instruments = 'test'
     
@@ -43,9 +45,6 @@ class Portfolio_strategy(Basic_Strategy):
             {'name': 'rebalance_period', 'type': 'int', 'min': 1, 'max': 500},
             {'name': 'max_lot', 'type': 'int', 'min': 5, 'max': 45}
         ]
-
-    def get_min_data_length(self):
-        return 100
 
     def make_decision(self, data):
         # only for the first usage of this func

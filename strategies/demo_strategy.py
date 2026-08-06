@@ -18,6 +18,8 @@ class DemoStrategy(Basic_Strategy):
         self.take_profit_percent = kwargs['take_profit_percent']
         self.stop_loss_percent = kwargs['stop_loss_percent']
 
+        self.min_data_length = 1
+
         self.Name = "test"
 
     @staticmethod
@@ -32,9 +34,6 @@ class DemoStrategy(Basic_Strategy):
             {'name': 'take_profit_percent', 'type': 'float', 'min': 0.001, 'max': 1},
             {'name': 'stop_loss_percent', 'type': 'float', 'min': 0.001, 'max': 1},
         ]
-
-    def get_min_data_length(self):
-        return 1
 
     def make_decision(self, data):
         # only for the first usage of this func

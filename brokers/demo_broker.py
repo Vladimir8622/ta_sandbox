@@ -8,7 +8,7 @@ import logging
 from orders.enums import OrderType, Side, OrderStatus
 from orders.order import Order
 
-class test_broker(Basic_Broker):
+class DemoBroker(Basic_Broker):
     def __init__(self, commissions, slippage, main_logger_name):
         self.commissions = commissions
         self.slippage = slippage

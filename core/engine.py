@@ -5,7 +5,7 @@ if __name__ == "__main__":
     sys.path.insert(0, str(root_dir))
 
 import data_management.data_manager as dm
-from brokers.demo_broker import test_broker
+from brokers.demo_broker import DemoBroker
 from responses.global_response.close_all import Close_all
 from responses.instrument_response.instr_open_position import Open_Position
 from responses.global_response.wait import Wait
@@ -74,10 +74,12 @@ logger_name = 'ENGINE'
 logger = logging.getLogger(logger_name)
 logger.setLevel(logging.DEBUG)
 
+
+
 if args.logs:
-    print('Переходим в режим логгирования',file=sys.stderr)
+    print('Переходим в режим логгирования',file=sys.stderr, end = '---->')
     logs = []
-    handler = logging.FileHandler('test.log', encoding='utf-8')
+    handler = logging.FileHandler(params['dir'] + '/' + 'test.log', encoding='utf-8')
     handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     logger.addHandler(handler)
 else:
@@ -142,11 +144,11 @@ brokers_info = params['brokers']
 
 commissions = brokers_info['commissions']
 slippage = brokers_info['slippage']
-broker = test_broker(commissions=commissions, slippage=slippage, main_logger_name=logger_name) 
+broker = DemoBroker(commissions=commissions, slippage=slippage, main_logger_name=logger_name) 
 
 # Узнаем сколько надо для стратегии на разогрев
 
-min_length = strategy.get_min_data_length()
+min_length = strategy.min_data_length
 
 logger.debug('Начинаю цикл по свечам')
 
@@ -238,6 +240,7 @@ def calculate_metrics(states):
 result = calculate_metrics(data['current_state'].iloc[min_length:].to_list())
 
 if args.logs:
+    print('<----Завершаем логгирование',file = sys.stderr, end = '')
     # logs = pd.DataFrame(logs)
     result['logs'] = logs
 
