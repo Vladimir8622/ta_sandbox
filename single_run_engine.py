@@ -28,6 +28,7 @@ def run_engine(config: dict) -> None:
 
     # Формируем словарь для передачи в Engine
     all_params = {
+        'instruments_metainfo': config['instruments_metainfo'],
         'instruments': config['instruments'],
         'brokers': config['brokers'],
         'strategy': config['strategy'],
@@ -44,6 +45,8 @@ def run_engine(config: dict) -> None:
     ]
 
     result = subprocess.run(command, capture_output=True, text=True)
+
+    print("STDOUT:", result)
 
     try:
         output = json.loads(result.stdout)

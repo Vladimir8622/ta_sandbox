@@ -1,3 +1,5 @@
+instruments_metainfo:
+  type: single
 
 instruments:
   - Market: "MOEX"

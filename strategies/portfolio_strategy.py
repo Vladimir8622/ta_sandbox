@@ -28,7 +28,7 @@ class Portfolio_strategy(Basic_Strategy):
         self.rebalance_period = kwargs['rebalance_period']
         self.max_lot = kwargs['max_lot']
 
-        self.min_data_length = 100
+        self.min_data_length = 200
 
         self.bar_count = 0            
         self.instruments = 'test'
@@ -65,8 +65,18 @@ class Portfolio_strategy(Basic_Strategy):
         data_to_process = data.copy()
         prices = data_to_process.xs('close', level=1, axis=1)
         log_ret = prices_to_returns(prices)
+
+        # 1. Удаляем активы с нулевой дисперсией
+        variances = log_ret.var()
+        active_assets = variances[variances > 1e-10].index  # небольшой порог
+        log_ret = log_ret[active_assets]
+
         X_train, X_test = train_test_split(log_ret, test_size=0.33, shuffle=False)
-        
+
+        train_var = X_train.var()
+        train_active = train_var[train_var > 1e-10].index
+        X_train = X_train[train_active]
+        X_test = X_test[train_active]
         
         model_long_only = MeanRisk(
             risk_measure=RiskMeasure.VARIANCE,
