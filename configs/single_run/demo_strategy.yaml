@@ -24,3 +24,4 @@ strategy_info:
 output:
   equity_plot: "equity.png"
   trades_csv: "trades_log.csv"
+  orders_csv: "orders_log.csv"
