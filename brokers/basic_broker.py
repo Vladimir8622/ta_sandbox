@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from responses.Basic_Response import Response
-from core.State import State as State
+from responses.basic_response import Response
+from core.state import State as State
 
 class Basic_Broker(ABC):
     @abstractmethod

@@ -4,13 +4,13 @@ if __name__ == "__main__":
     root_dir = Path(__file__).parent.parent
     sys.path.insert(0, str(root_dir))
 
-import data_management.Data_manager as dm
-from brokers.test_broker import test_broker
-from responses.global_response.Close_all import Close_all
+import data_management.data_manager as dm
+from brokers.demo_broker import test_broker
+from responses.global_response.close_all import Close_all
 from responses.instrument_response.instr_open_position import Open_Position
-from responses.global_response.Wait import Wait
+from responses.global_response.wait import Wait
 from responses.instrument_response.instr_wait import instr_Wait
-from core.State import State
+from core.state import State
 import argparse
 import json
 import pandas as pd

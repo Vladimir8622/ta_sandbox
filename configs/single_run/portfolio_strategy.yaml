@@ -94,7 +94,7 @@ strategy:
   max_lot: 0.5
 
 strategy_info:
-  path: "strategies/Portfolio_strategy.py"
+  path: "strategies/portfolio_strategy.py"
   name: "Portfolio_strategy"
 
 output:

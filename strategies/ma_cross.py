@@ -1,9 +1,9 @@
 import numpy as np
 from numba import njit
 
-from strategies.Basic_Strategy import Basic_Strategy
+from strategies.basic_strategy import Basic_Strategy
 from responses.instrument_response.instr_open_position import Open_Position
-from responses.global_response.Mixed_response import Mixed_response
+from responses.global_response.mixed_response import Mixed_response
 from responses.instrument_response.instr_wait import instr_Wait
 
 

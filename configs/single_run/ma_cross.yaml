@@ -18,7 +18,7 @@ strategy:
   stop_loss_percent: 0.01
 
 strategy_info:
-  path: "strategies/MA_cross.py"
+  path: "strategies/ma_cross.py"
   name: "MA_cross"
 
 output:

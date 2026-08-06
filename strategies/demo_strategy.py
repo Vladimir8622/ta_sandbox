@@ -1,11 +1,11 @@
-from strategies.Basic_Strategy import Basic_Strategy
+from strategies.basic_strategy import Basic_Strategy
 from responses.instrument_response.instr_open_position import Open_Position
-from responses.global_response.Mixed_response import Mixed_response
+from responses.global_response.mixed_response import Mixed_response
 from responses.instrument_response.instr_wait import instr_Wait
 import random
 
 
-class Test_strategy(Basic_Strategy):
+class DemoStrategy(Basic_Strategy):
 
     def __init__(self, **kwargs):
         super().__init__()

@@ -1,12 +1,12 @@
 import numpy as np
 from numba import njit
 
-from strategies.Basic_Strategy import Basic_Strategy
+from strategies.basic_strategy import Basic_Strategy
 from responses.instrument_response.instr_open_position import Open_Position
-from responses.global_response.Wait import Wait
+from responses.global_response.wait import Wait
 from responses.instrument_response.instr_wait import instr_Wait
-from responses.global_response.Close_all import Close_all
-from responses.global_response.Mixed_response import Mixed_response
+from responses.global_response.close_all import Close_all
+from responses.global_response.mixed_response import Mixed_response
 
 import pandas as pd
 from sklearn.model_selection import train_test_split

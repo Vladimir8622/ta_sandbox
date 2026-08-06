@@ -16,8 +16,8 @@ strategy:
   stop_loss_percent: 0.01
 
 strategy_info:
-  path: "strategies/Test_strategy.py"
-  name: "Test_strategy"
+  path: "strategies/demo_strategy.py"
+  name: "DemoStrategy"
 
 output:
   equity_plot: "equity.png"
