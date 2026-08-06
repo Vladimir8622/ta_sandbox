@@ -1,0 +1,26 @@
+
+instruments:
+  - Market: "MOEX"
+    Active: "adjusted_stock"
+    Timeframe: "1d"
+    Name: "ABIO.MOEX"
+    Start: "2023-08-18"
+    End: "2026-07-08"
+
+brokers:
+  commissions: 0.0001
+  slippage: 0.0
+
+strategy:
+  long_period: 30
+  short_period: 10
+  take_profit_percent: 0.05
+  stop_loss_percent: 0.01
+
+strategy_info:
+  path: "strategies/MA_cross.py"
+  name: "MA_cross"
+
+output:
+  equity_plot: "equity.png"
+  trades_csv: "trades_log.csv"

@@ -15,7 +15,7 @@ import sys
 # file_path = r'Strategies\Test_strategy.py'
 # class_name = 'Test_strategy'
 
-file_path = r'Strategies\Portfolio_strategy.py'
+file_path = r'strategies\Portfolio_strategy.py'
 class_name = 'Portfolio_strategy'
 
 strategy_info = {'name': class_name,

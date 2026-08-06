@@ -1,4 +1,4 @@
-from Strategies.Basic_Strategy import Basic_Strategy
+from strategies.Basic_Strategy import Basic_Strategy
 from responses.instrument_response.instr_open_position import Open_Position
 from responses.global_response.Mixed_response import Mixed_response
 from responses.instrument_response.instr_wait import instr_Wait
@@ -6,10 +6,17 @@ import random
 
 
 class Test_strategy(Basic_Strategy):
-    def __init__(self, take_profit_percent,stop_loss_percent):
+
+    def __init__(self, **kwargs):
         super().__init__()
-        self.take_profit_percent = take_profit_percent
-        self.stop_loss_percent = stop_loss_percent
+
+        required = {'take_profit_percent', 'stop_loss_percent'}
+        missing = required - set(kwargs.keys())
+        if missing:
+            raise ValueError(f"Missing required parameters: {missing}")
+
+        self.take_profit_percent = kwargs['take_profit_percent']
+        self.stop_loss_percent = kwargs['stop_loss_percent']
 
         self.Name = "test"
 
