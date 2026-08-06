@@ -12,5 +12,5 @@ class Basic_Broker(ABC):
         pass
 
     @abstractmethod
-    def check_position(self, current_state, data) -> State:
+    def process_pending_orders(self, current_state, last_row) -> State:
         pass

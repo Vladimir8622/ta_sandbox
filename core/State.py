@@ -2,6 +2,7 @@ class State:
     def __init__(self, margin=100):
         self.margin = margin
         self.positions = {}
+        self.pending_orders = []
 
     @property
     def balance(self):
@@ -14,4 +15,6 @@ class State:
             instr: [pos.copy() for pos in pos_list]
             for instr, pos_list in self.positions.items()
         }
+        new_state.pending_orders = [order.copy() for order in self.pending_orders]
+
         return new_state

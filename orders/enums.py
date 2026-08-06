@@ -10,7 +10,8 @@ class OrderType(Enum):
     STOP = auto()
 
 class OrderStatus(Enum):
-    NEW = auto()
+    PENDING = auto()
     FILLED = auto()
     CANCELLED = auto()
     REJECTED = auto()
+ 

@@ -6,7 +6,7 @@ from responses.global_response.Close_all import Close_all
 from responses.global_response.Mixed_response import Mixed_response
 import logging
 from orders.enums import OrderType, Side, OrderStatus
-from orders.market_order import MarketOrder
+from orders.order import Order
 
 class test_broker(Basic_Broker):
     def __init__(self, commissions, slippage, main_logger_name):
@@ -39,137 +39,131 @@ class test_broker(Basic_Broker):
         return new_state
 
     def _response_to_order(self, instrument, decision):
-        self.logger.debug('Зашел в response_to_order')
-
-        # decision — это Open_Position из responses/instrument_response
         side = Side.BUY if decision.direction == 1 else Side.SELL
-        self.logger.debug('Вышел из response_to_order')
+        return Order(symbol=instrument, side=side, volume=decision.volume,
+                     order_type=OrderType.MARKET,
+                     take_profit=decision.take_profit,
+                     stop_loss=decision.stop_loss)
 
-        return MarketOrder(symbol=instrument,
-                            side=side,
-                            volume=decision.volume,
-                            take_profit=decision.take_profit,
-                            stop_loss=decision.stop_loss)
-
-    def execute_order(self, order, last_row):
-        self.logger.debug('Зашел в execute_order')
-
-        if order.order_type != OrderType.MARKET:
-            raise NotImplementedError(order.order_type)
-
-        price = last_row[(order.symbol, 'close')]
-        order.fill(price)
-
-        direction = 1 if order.side == Side.BUY else -1
-        self.logger.debug('Вышел из execute_order')
-
-        return Position(direction,
-                        volume=order.filled_volume,
-                        entry_price=order.filled_price,
-                        take_profit=order.take_profit,
-                        stop_loss=order.stop_loss)
+    
  
-    def check_response(self,current_state,response,last_row):
+    def check_response(self, current_state, response, last_row):
         new_state = current_state.copy()
-        self._log_state('Перед обработкой запроса.',new_state)
- 
+        self._log_state('Перед обработкой запроса.', new_state)
+
         if isinstance(response, Wait):
-            self.logger.debug('Получил wait')
-            self._log_state('После обработки запроса.',new_state)
-            self.logger.debug('Выхожу из check_response')
             return new_state
-        
+
         if isinstance(response, Close_all):
-            self.logger.debug('Получил close all')
- 
             for instrument, decision in current_state.positions.items():
                 last_price = last_row[(instrument, 'close')]
-                if instrument in new_state.positions:
-                    positions = new_state.positions[instrument]
-                else:
-                    positions = []
- 
+                positions = new_state.positions.get(instrument, [])
+
                 for position in positions[:]:
                     positions.remove(position)
                     new_state.margin += position.locked_volume
                     new_state.margin -= position.amount * last_price * (self.commissions + self.slippage)
- 
+
                 new_state.positions[instrument] = positions
-                if not new_state.positions[instrument]: del new_state.positions[instrument]
- 
-            self._log_state('После обработки запроса.',new_state)
-            self.logger.debug('Выхожу из check_response')
+                if not new_state.positions[instrument]:
+                    del new_state.positions[instrument]
+
+            for order in new_state.pending_orders:
+                if order.status == OrderStatus.PENDING:
+                    order.cancel()
+            new_state.pending_orders = []
             return new_state
-        
+
         if isinstance(response, Mixed_response):
-            self.logger.debug('Получил Mixed response')
- 
             for instrument, decision in response.positions.items():
- 
                 pos_list = new_state.positions.get(instrument, [])
- 
+
                 if type(decision) == type(instr_Wait()):
                     continue
- 
-                if len(pos_list)>2:
+                if len(pos_list) > 2:
                     continue
- 
-                if decision.direction in (1,-1):
- 
+
+                if decision.direction in (1, -1):
                     order = self._response_to_order(instrument, decision)
-                    position = self.execute_order(order, last_row)
-                    
-                    new_state.margin -= decision.volume * (1 + self.commissions + self.slippage)
-                    pos_list.append(position)
+                    new_state.pending_orders.append(order)
                 else:
                     raise ValueError('Неправильно заданый ответ стратегии')
-                
-                new_state.positions[instrument] = pos_list
-            self._log_state('После обработки запроса.',new_state)
-            self.logger.debug('Выхожу из check_response')
+
+            self._log_state('После обработки запроса.', new_state)
             return new_state
- 
+
         raise ValueError('up to this moment every response must be processed')
     
-    def check_position(self, current_state, data):
+    def _make_exit_orders(self, symbol, position):
+        close_side = Side.SELL if position.direction == 1 else Side.BUY
+        orders = []
+        if position.stop_loss is not None:
+            orders.append(Order(symbol=symbol, side=close_side, volume=position.volume,
+                                 order_type=OrderType.STOP,          # SL
+                                 trigger_price=position.stop_loss,
+                                 linked_position_id=position.id))
+        if position.take_profit is not None:
+            orders.append(Order(symbol=symbol, side=close_side, volume=position.volume,
+                                 order_type=OrderType.LIMIT,         # TP
+                                 limit_price=position.take_profit,
+                                 linked_position_id=position.id))
+        return orders
+
+    def _fill_entry(self, state, order, price):
+        order.fill(price)
+        direction = 1 if order.side == Side.BUY else -1
+        position = Position(direction,
+                             volume=order.filled_volume,
+                             entry_price=order.filled_price,
+                             take_profit=order.take_profit,
+                             stop_loss=order.stop_loss)
+
+        state.margin -= order.filled_volume * (1 + self.commissions + self.slippage)
+        state.positions.setdefault(order.symbol, []).append(position)
+        state.pending_orders += self._make_exit_orders(order.symbol, position)
+
+    def _fill_exit(self, state, order, price):
+        positions = state.positions.get(order.symbol, [])
+        position = next((p for p in positions if p.id == order.linked_position_id), None)
+
+        if position is None:
+            order.cancel()   
+            return
+
+        order.fill(price)
+        positions.remove(position)
+        state.margin += position.locked_volume
+        state.margin -= position.amount * price * (self.commissions + self.slippage)
+
+        state.positions[order.symbol] = positions
+        if not state.positions[order.symbol]:
+            del state.positions[order.symbol]
+
+        for other in state.pending_orders:
+            if other.linked_position_id == position.id and other.status == OrderStatus.PENDING:
+                other.cancel()
+
+    def process_pending_orders(self, current_state, last_row):
+        #Вызывать ДО check_respons на каждой итерации
         new_state = current_state.copy()
-        self.logger.debug('Зашел в check_position')
- 
-        comparasing = False
- 
-        for instrument, positions in new_state.positions.items():
- 
-            last_price = data[instrument]['close'].to_list()[-1]
-            positions = positions
- 
-            for position in positions[:]:
-                current_direction = position.direction
-                stop_loss = position.stop_loss
-                take_profit = position.take_profit
-                if current_direction == 1:
-                    if last_price < stop_loss or last_price > take_profit:
-                        self.logger.debug(f'Удаляю позицию из {instrument}')
-                        comparasing = True
- 
-                        positions.remove(position)
-                        new_state.margin += position.locked_volume
-                        new_state.margin -= position.amount * last_price * (self.commissions + self.slippage)
-                elif current_direction == -1:
-                    if last_price > stop_loss or last_price < take_profit:
-                        self.logger.debug(f'Удаляю позицию из {instrument}')
-                        comparasing = True
- 
-                        positions.remove(position)
-                        new_state.margin += position.locked_volume
-                        new_state.margin -= position.amount * last_price * (self.commissions + self.slippage)
-                else: 
-                    pass
- 
-            new_state.positions[instrument] = positions
- 
-        if comparasing:
-            self._log_state('До удаления позиций',current_state)
-            self._log_state('После удаления позиций',new_state)
- 
-        self.logger.debug('Вышел из check_position')
+        still_pending = []
+
+        for order in new_state.pending_orders:
+            if order.status != OrderStatus.PENDING:
+                continue
+
+            price = last_row[(order.symbol, 'close')]
+
+            if order.is_triggered(price):
+                if order.linked_position_id is None:
+                    self._fill_entry(new_state, order, price)
+                else:
+                    self._fill_exit(new_state, order, price)
+            else:
+                still_pending.append(order)
+
+        new_state.pending_orders = still_pending
+        self._log_state('После обработки очереди ордеров.', new_state)
         return new_state
+    
+    

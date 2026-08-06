@@ -157,37 +157,34 @@ for i in range(min_length, len(data)):
     current_state = data['current_state'].iloc[i-1]
     last_row = data.iloc[i]
 
-    # обновляем внутренние поля для корректного отображения баланса
+    logger.debug('balance before process_pending_orders')
+    logger.debug(current_state.balance)
     new_state = broker.mark_to_market(current_state=current_state,
                                        last_row=last_row)
-
-    logger.debug('balance at beginning of bar')
-    logger.debug(current_state.balance)
+    new_state = broker.process_pending_orders(current_state=new_state,
+                                                last_row=last_row)
+    logger.debug('balance after process_pending_orders')
+    logger.debug(new_state.balance)
 
     response = strategy.make_decision(history)
-    # Прям сюда добавить перевод респонза в ордера и потом проверку ордеров
+
     new_state = broker.check_response(current_state=new_state,
                                        response=response,
                                        last_row=last_row)
 
-    logger.debug('margin after check_response and check_orders')
-    logger.debug(new_state.margin)
-
-    new_state = broker.check_position(new_state, data[:i+1])
-
-    logger.debug('margin after check position')
-    logger.debug(new_state.margin)
+    logger.debug('balance after check_response')
+    logger.debug(new_state.balance)
 
     data.iloc[i, data.columns.get_loc('current_state')] = new_state
 
     if args.logs:
-        current_line = create_logs(response = response,
-                                   new_state = new_state,
-                                   datetime = data.index[i].isoformat())
+        current_line = create_logs(response=response,
+                                    new_state=new_state,
+                                    datetime=data.index[i].isoformat())
         logs.append(current_line)
 
     logger.debug('end of processing bar')
-
+    
 def calculate_metrics(states):
     if not states:
         return {
