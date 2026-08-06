@@ -1,9 +1,9 @@
-from Brokers.Basic_Broker import Basic_Broker
-from core.Position import Position
-from responses.global_response.Wait import Wait
+from brokers.basic_broker import Basic_Broker
+from core.position import Position
+from responses.global_response.wait import Wait
 from responses.instrument_response.instr_wait import instr_Wait
-from responses.global_response.Close_all import Close_all
-from responses.global_response.Mixed_response import Mixed_response
+from responses.global_response.close_all import Close_all
+from responses.global_response.mixed_response import Mixed_response
 import logging
 from orders.enums import OrderType, Side, OrderStatus
 from orders.order import Order
