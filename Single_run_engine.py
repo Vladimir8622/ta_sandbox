@@ -9,13 +9,10 @@ import yaml
 import matplotlib.pyplot as plt
 import pandas as pd
 
-CONFIG = 'config_single_run_engine.yaml'
-
 def load_config(config_path: str) -> dict:
     with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
     return config
-
 
 def run_engine(config: dict) -> None:
 
@@ -138,16 +135,11 @@ def run_engine(config: dict) -> None:
     print(f"Записано {len(trades)} сделок в {trades_csv}")
     print(f"График сохранён как {equity_plot}")
 
-
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Single run of trading engine")
-    parser.add_argument('--config', type=str, default='configs/run_config.yaml',
+    parser.add_argument('--config', type=str, default=r'configs\single_run\config_single_run_engine.yaml',
                         help='Path to YAML configuration file')
     args = parser.parse_args()
-
  
-    config = load_config(CONFIG)
+    config = load_config(args.config)
     run_engine(config)
-
-if __name__ == "__main__":
-    main()
