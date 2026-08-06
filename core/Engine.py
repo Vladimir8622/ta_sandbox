@@ -105,12 +105,16 @@ for instrument in params['instruments']:
     data.append(df)
 
 data = pd.concat(data, axis=1)
-
 data = data.sort_index(axis=1)
+
+# гарантируем отсутствие NaN в ценах закрытия
 instrument_names = [instr['Name'] for instr in params['instruments']]
 close_cols = [(name, 'close') for name in instrument_names]
 
 data = data.dropna(subset=close_cols)
+
+initial_balance = 100 #начальный баланс
+data['current_state'] = [State(initial_balance) for x in range(len(data))] 
 
 #Определяем стратегию
 
@@ -140,10 +144,6 @@ commissions = brokers_info['commissions']
 slippage = brokers_info['slippage']
 broker = test_broker(commissions=commissions, slippage=slippage, main_logger_name=logger_name) 
 
-
-initial_balance = 100 #начальный баланс
-data['current_state'] = [State(initial_balance) for x in range(len(data))] 
-
 # Узнаем сколько надо для стратегии на разогрев
 
 min_length = strategy.get_min_data_length()
@@ -154,30 +154,29 @@ for i in range(min_length, len(data)):
     logger.debug('New bar!')
 
     history = data[:i+1]
-
-    response = strategy.make_decision(history)
-
     current_state = data['current_state'].iloc[i-1]
-
-    logger.debug('balance before check_response')
-    logger.debug(current_state.balance)
-    
     last_row = data.iloc[i]
 
+    # обновляем внутренние поля для корректного отображения баланса
     new_state = broker.mark_to_market(current_state=current_state,
                                        last_row=last_row)
 
+    logger.debug('balance at beginning of bar')
+    logger.debug(current_state.balance)
+
+    response = strategy.make_decision(history)
+    # Прям сюда добавить перевод респонза в ордера и потом проверку ордеров
     new_state = broker.check_response(current_state=new_state,
                                        response=response,
                                        last_row=last_row)
 
-    logger.debug('balance after check_response')
-    logger.debug(new_state.balance)
+    logger.debug('margin after check_response and check_orders')
+    logger.debug(new_state.margin)
 
     new_state = broker.check_position(new_state, data[:i+1])
 
-    logger.debug('balance after check position')
-    logger.debug(new_state.balance)
+    logger.debug('margin after check position')
+    logger.debug(new_state.margin)
 
     data.iloc[i, data.columns.get_loc('current_state')] = new_state
 
