@@ -119,7 +119,6 @@ class DemoBroker(Basic_Broker):
 
         state.margin += closed_locked
         state.margin -= closed_amount * price * (self.commissions + self.slippage)
-        state.balance += closed_locked - close_qty
 
         is_full_close = fraction >= 1 - 1e-9
 
@@ -132,9 +131,25 @@ class DemoBroker(Basic_Broker):
             position.volume -= close_qty
             position.amount -= closed_amount
             position.locked_volume -= closed_locked
-            for other in state.pending_orders:
-                if other.linked_position_id == position.id and other.status == OrderStatus.PENDING:
-                    other.volume -= close_qty
+
+            # Если объём стал практически нулевым, удаляем позицию полностью
+            if position.volume < 1e-9:
+                positions.remove(position)
+                # Отменяем связанные ордера
+                for other in state.pending_orders:
+                    if other.linked_position_id == position.id and other.status == OrderStatus.PENDING:
+                        other.cancel()
+                # Если список стал пустым, удаляем ключ
+                if not positions:
+                    del state.positions[order.symbol]
+                return
+            else:
+                # Пересчитываем среднюю цену
+                position.entry_price = position.volume / position.amount if position.amount else 0
+                # Корректируем отложенные ордера
+                for other in state.pending_orders:
+                    if other.linked_position_id == position.id and other.status == OrderStatus.PENDING:
+                        other.volume -= close_qty
 
         if order.symbol in state.positions:
             if not state.positions[order.symbol]:
@@ -144,30 +159,26 @@ class DemoBroker(Basic_Broker):
 
 
     def _process_modify_position(self, state, instrument, positions, decision, last_row):
-        """
-        Приводит суммарный ДОЛЛАРОВЫЙ объём позиции по инструменту к decision.new_volume.
-        volume у Position/Order — всегда $, amount у Position — всегда шт.
-        """
         last_price = last_row[(instrument, 'close')]
         if last_price <= 0 or not positions:
             return
 
-        current_money = sum(p.volume for p in positions)          # $ !
+        current_money = sum(p.volume for p in positions)
         target_money = decision.new_volume
-        delta_money = target_money - current_money
-
+        if abs(target_money) < 1e-9:
+            target_money = 0.0
+        delta_money = target_money - current_money          
         if abs(delta_money) < 1e-9:
             return
 
         if delta_money > 0:
-            # докупка — мёржим в последний фрагмент, а не плодим новую позицию
             order = Order(symbol=instrument, side=Side.BUY, volume=delta_money,
                         order_type=OrderType.MARKET,
                         take_profit=decision.take_profit, stop_loss=decision.stop_loss)
             order.fill(last_price)
 
-            added_money = order.filled_volume                      # $
-            added_shares = added_money / last_price                # шт.
+            added_money = order.filled_volume                      
+            added_shares = added_money / last_price                # 
 
             target_pos = positions[-1]
             new_volume = target_pos.volume + added_money            # $
@@ -185,7 +196,6 @@ class DemoBroker(Basic_Broker):
                     other.volume = target_pos.volume
             return
 
-        # delta_money < 0 -> продаём часть/всю позицию, LIFO, всё в $
         remaining_money = min(abs(delta_money), current_money)
         if remaining_money <= 1e-9:
             return
@@ -193,7 +203,7 @@ class DemoBroker(Basic_Broker):
         for pos in reversed(positions[:]):
             if remaining_money <= 1e-9:
                 break
-            close_money = min(pos.volume, remaining_money)          # $
+            close_money = min(pos.volume, remaining_money)          
             order = Order(symbol=instrument, side=Side.SELL, volume=close_money,
                         order_type=OrderType.MARKET, linked_position_id=pos.id)
             self._fill_exit(state, order, last_price)
