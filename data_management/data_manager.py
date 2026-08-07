@@ -21,6 +21,8 @@ class Data_manager:
 
     def load_all_instrument_in_interval(self, market, active, timeframe, start, end):
 
+        # Не реалистична, тк откидывает условных банкротов и инструменты что перестали торговать
+
         folder = Path(f"data/{market}/{active}/{timeframe}")
 
         data = []
@@ -39,6 +41,12 @@ class Data_manager:
 
             mask = (df["begin"] >= start_dt) & (df["begin"] <= end_dt)
             df_filtered = df.loc[mask]
+
+            if df_filtered['close'].isnull().mean() > 0.1:
+                continue
+
+            if pd.isna(df_filtered['close'].iloc[0]):
+                continue
 
             if not df_filtered.empty:
                 df_filtered = df_filtered.set_index('begin')  

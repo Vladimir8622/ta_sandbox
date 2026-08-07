@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit
+import sys
 
 from strategies.basic_strategy import Basic_Strategy
 from responses.instrument_response.instr_open_position import Open_Position
@@ -28,7 +29,7 @@ class Portfolio_strategy(Basic_Strategy):
         self.rebalance_period = kwargs['rebalance_period']
         self.max_lot = kwargs['max_lot']
 
-        self.min_data_length = 200
+        self.min_data_length = 300
 
         self.bar_count = 0            
         self.instruments = 'test'
@@ -64,7 +65,14 @@ class Portfolio_strategy(Basic_Strategy):
                
         data_to_process = data.copy()
         prices = data_to_process.xs('close', level=1, axis=1)
+        # не lookahead тк в будущее не посмотреть никак
+        prices = prices.ffill().bfill()
+        # удаляем мусор, который имеет nan. вроде как такого не так много должно быть
+        prices = prices.dropna(axis=1, how='any')
+
         log_ret = prices_to_returns(prices)
+
+        log_ret = log_ret.dropna() 
 
         # 1. Удаляем активы с нулевой дисперсией
         variances = log_ret.var()

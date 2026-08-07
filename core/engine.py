@@ -126,8 +126,7 @@ if params['instruments_metainfo']['type'] == 'single':
     data = data.sort_index(axis=1)
 
     instrument_names = [instr['Name'] for instr in params['instruments']]
-
-if params['instruments_metainfo']['type'] == 'folder':
+elif params['instruments_metainfo']['type'] == 'folder':
     instruments = params['instruments']
 
     data = manager.load_all_instrument_in_interval(market = instruments['Market'], 
@@ -138,23 +137,11 @@ if params['instruments_metainfo']['type'] == 'folder':
 
     instrument_names = data.columns.get_level_values(0).unique().tolist()
 
-# гарантируем отсутствие NaN в ценах закрытия
-close_cols = [(name, 'close') for name in instrument_names]
-
-# data = data.dropna(subset=close_cols)
-print('до дропна',file = sys.stderr)
-print(len(data),file = sys.stderr)
-data = data.dropna(thresh=int(0.9 * len(close_cols)), subset=close_cols)
-data = data.ffill().bfill()
-print(len(data),file = sys.stderr)
-print('после дроп на',file = sys.stderr)
-
 initial_balance = 100 #начальный баланс
 data = data.copy()
 data['current_state'] = [State(initial_balance) for x in range(len(data))] 
 
 #Определяем стратегию
-
 strategy_info = params['info']
 
 file_path = strategy_info['path']
@@ -177,17 +164,14 @@ strategy = MyClass(**strategy_kwargs)
 #Определяем брокера
 brokers_info = params['brokers']
 
-commissions = brokers_info['commissions']
-slippage = brokers_info['slippage']
-broker = DemoBroker(commissions=commissions, slippage=slippage, main_logger_name=logger_name) 
+broker = DemoBroker(commissions=brokers_info['commissions'],
+                     slippage=brokers_info['slippage'],
+                       main_logger_name=logger_name) 
 
 # Узнаем сколько надо для стратегии на разогрев
-
 min_length = strategy.min_data_length
 
-print(f"Загружено строк данных: {len(data)}", file=sys.stderr)
-print(f"min_data_length стратегии: {strategy.min_data_length}", file=sys.stderr)
-
+# Начинаем главный цикл
 logger.debug('Начинаю цикл по свечам')
 
 for i in range(min_length, len(data)):
