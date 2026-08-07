@@ -176,23 +176,20 @@ for i in range(min_length, len(data)):
     current_state = data['current_state'].iloc[i-1]
     last_row = data.iloc[i]
 
-    logger.debug('balance before process_pending_orders')
-    logger.debug(current_state.balance)
-    new_state = broker.mark_to_market(current_state=current_state,
-                                       last_row=last_row)
-    new_state = broker.process_pending_orders(current_state=new_state,
-                                                last_row=last_row)
-    logger.debug('balance after process_pending_orders')
-    logger.debug(new_state.balance)
-
     response = strategy.make_decision(history)
-
-    new_state = broker.check_response(current_state=new_state,
+    logger.debug('Брокер обрабатывает решение стратегии')
+    new_state = broker.check_response(current_state=current_state,
                                        response=response,
                                        last_row=last_row)
 
-    logger.debug('balance after check_response')
+    logger.debug('Брокер обрабатывает очередь ордеров')
+    new_state = broker.mark_to_market(current_state=new_state,
+                                       last_row=last_row)
+    new_state = broker.process_pending_orders(current_state=new_state,
+                                                last_row=last_row)
+    logger.debug('Баланс после действий ордера')
     logger.debug(new_state.balance)
+
 
     data.iloc[i, data.columns.get_loc('current_state')] = new_state
 

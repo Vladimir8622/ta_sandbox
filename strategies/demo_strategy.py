@@ -2,7 +2,9 @@ from strategies.basic_strategy import Basic_Strategy
 from responses.instrument_response.instr_open_position import Open_Position
 from responses.global_response.mixed_response import Mixed_response
 from responses.instrument_response.instr_wait import instr_Wait
-import random
+from responses.global_response.wait import Wait
+
+import random, logging
 
 
 class DemoStrategy(Basic_Strategy):
@@ -17,6 +19,8 @@ class DemoStrategy(Basic_Strategy):
 
         self.take_profit_percent = kwargs['take_profit_percent']
         self.stop_loss_percent = kwargs['stop_loss_percent']
+
+        # self.logger = logging.getLogger(kwargs['main_logger_name'] + '.' + __name__ + '.' + self.__class__.__name__)
 
         self.Name = "test"
 
@@ -54,6 +58,6 @@ class DemoStrategy(Basic_Strategy):
             price = price = data_to_process[self.Name]['close'].iloc[-2]
             decison = Open_Position(1,1,price, take_profit = price*(1+self.take_profit_percent), stop_loss = price*(1-self.stop_loss_percent))
         else:
-            decison = instr_Wait()
+            return Wait()
         
         return Mixed_response({self.Name:decison})
