@@ -46,9 +46,11 @@ class MA_cross(Basic_Strategy):
         self.take_profit_percent = kwargs['take_profit_percent']
         self.stop_loss_percent = kwargs['stop_loss_percent']
 
-        self.min_data_length = max(self.long_period, self.short_period) + 1
-
         self.Name = "test"
+
+    @property
+    def min_data_length(self):
+        return max(self.long_period, self.short_period) + 1
     
     @staticmethod
     def get_data_requirements():

@@ -104,28 +104,16 @@ manager = dm.Data_manager()
 data = []
 
 if params['instruments_metainfo']['type'] == 'single':
+    instruments = params['instruments']
+    instrument_names = [instruments['Name']]
 
-    for instrument in params['instruments']:
-        Market = instrument['Market']
-        Active = instrument['Active']
-        Timeframe = instrument['Timeframe']
-        Name = instrument['Name']
-        Start = instrument['Start']
-        End = instrument['End']
-
-        df = manager.load_instrument(Market, Active, Timeframe, Name, Start, End)
-
-        df = df.set_index('begin')  
-        
-        multi_columns = pd.MultiIndex.from_product([[Name], df.columns])
-        df.columns = multi_columns
-        
-        data.append(df)
-
-    data = pd.concat(data, axis=1)
-    data = data.sort_index(axis=1)
-
-    instrument_names = [instr['Name'] for instr in params['instruments']]
+    data = manager.load_one_instrument_in_interval(market = instruments['Market'], 
+                                                active = instruments['Active'], 
+                                                timeframe = instruments['Timeframe'],
+                                                name = instruments['Name'],
+                                                start = instruments['Start'], 
+                                                end = instruments['End'])
+    
 elif params['instruments_metainfo']['type'] == 'folder':
     instruments = params['instruments']
 
@@ -135,6 +123,13 @@ elif params['instruments_metainfo']['type'] == 'folder':
                                                    start = instruments['Start'], 
                                                    end = instruments['End'])
 
+    instrument_names = data.columns.get_level_values(0).unique().tolist()
+
+elif params['instruments_metainfo']['type'] == 'dataset':
+    instruments = params['instruments']
+
+    data = manager.load_dataset(dataset_name = instruments['dataset_name'])
+    
     instrument_names = data.columns.get_level_values(0).unique().tolist()
 
 initial_balance = 100 #начальный баланс

@@ -1,0 +1,22 @@
+instruments_metainfo:
+  type: dataset
+
+instruments:
+  dataset_name: moex_adjusted_stock
+
+brokers:
+  commissions: 0.0001
+  slippage: 0.0
+
+strategy:
+  rebalance_period: 100
+  max_lot: 0.5
+
+strategy_info:
+  path: "strategies/portfolio_strategy.py"
+  name: "Portfolio_strategy"
+
+output:
+  equity_plot: "equity.png"
+  trades_csv: "trades_log.csv"
+  orders_csv: "orders_log.csv"
