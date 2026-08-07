@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 from skfolio import Population, RiskMeasure
 from skfolio.preprocessing import prices_to_returns
 from skfolio.optimization import MeanRisk, ObjectiveFunction
-
+import logging
 
 class Portfolio_strategy(Basic_Strategy):
 
@@ -30,6 +30,8 @@ class Portfolio_strategy(Basic_Strategy):
 
         self.rebalance_period = kwargs['rebalance_period']
         self.max_lot = kwargs['max_lot']
+
+        self.logger = logging.getLogger(kwargs['main_logger_name'] + '.' + __name__ + '.' + self.__class__.__name__)
 
         self.bar_count = 0            
         self.instruments = 'test'
@@ -61,7 +63,11 @@ class Portfolio_strategy(Basic_Strategy):
 
         if not is_rebalance_day:
             print('ffff', file = sys.stderr)
+            print(self.rebalance_period, file = sys.stderr)
+            self.logger.debug('Вернул Wait')
             return Wait()
+
+        self.logger.debug('Вернул не Wait')
 
         data_to_process = data.copy()
         prices = data_to_process.xs('close', level=1, axis=1)

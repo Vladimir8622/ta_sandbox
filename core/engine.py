@@ -153,6 +153,7 @@ known_keys = {'Market','Active','Timeframe','Name','Start','End','commissions','
 
 strategy_params = params['strategy']
 strategy_kwargs = {k: v for k, v in strategy_params.items() if k not in known_keys}
+strategy_kwargs['main_logger_name'] = logger_name
 
 strategy = MyClass(**strategy_kwargs)
 
@@ -189,6 +190,9 @@ for i in range(min_length, len(data)):
                                                 last_row=last_row)
     logger.debug('Баланс после действий ордера')
     logger.debug(new_state.balance)
+    logger.debug('Маржа после действий ордера')
+    logger.debug(new_state.margin)
+    logger.debug(len(new_state.pending_orders))
 
 
     data.iloc[i, data.columns.get_loc('current_state')] = new_state
