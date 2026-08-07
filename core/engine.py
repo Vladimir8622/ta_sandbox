@@ -125,6 +125,13 @@ elif params['instruments_metainfo']['type'] == 'folder':
 
     instrument_names = data.columns.get_level_values(0).unique().tolist()
 
+elif params['instruments_metainfo']['type'] == 'dataset':
+    instruments = params['instruments']
+
+    data = manager.load_dataset(dataset_name = instruments['dataset_name'])
+    
+    instrument_names = data.columns.get_level_values(0).unique().tolist()
+
 initial_balance = 100 #начальный баланс
 data = data.copy()
 data['current_state'] = [State(initial_balance) for x in range(len(data))] 
