@@ -4,6 +4,8 @@ import sys
 
 from strategies.basic_strategy import Basic_Strategy
 from responses.instrument_response.instr_open_position import Open_Position
+from responses.instrument_response.instr_modify_position import Modify_Position
+
 from responses.global_response.wait import Wait
 from responses.instrument_response.instr_wait import instr_Wait
 from responses.global_response.close_all import Close_all
@@ -48,44 +50,29 @@ class Portfolio_strategy(Basic_Strategy):
         ]
 
     def make_decision(self, data):
-        # only for the first usage of this func
         if self.instruments == 'test':
             all_level0 = data.columns.get_level_values(0).tolist()
             self.instruments = [name for name in all_level0 if name != 'current_state']
 
-        pre_rebalance_day = ((self.bar_count+1) % self.rebalance_period == 0)
         is_rebalance_day = (self.bar_count % self.rebalance_period == 0)
         self.bar_count += 1
 
-        if pre_rebalance_day:
-            return Close_all()  
-
         if not is_rebalance_day:
-            return Wait()    
-               
+            return Wait()
+
         data_to_process = data.copy()
         prices = data_to_process.xs('close', level=1, axis=1)
-        # не lookahead тк в будущее не посмотреть никак
         prices = prices.ffill().bfill()
-        # удаляем мусор, который имеет nan. вроде как такого не так много должно быть
         prices = prices.dropna(axis=1, how='any')
-
-        log_ret = prices_to_returns(prices)
-
-        log_ret = log_ret.dropna() 
-
-        # 1. Удаляем активы с нулевой дисперсией
+        log_ret = prices_to_returns(prices).dropna()
         variances = log_ret.var()
-        active_assets = variances[variances > 1e-10].index  # небольшой порог
+        active_assets = variances[variances > 1e-10].index
         log_ret = log_ret[active_assets]
-
         X_train, X_test = train_test_split(log_ret, test_size=0.33, shuffle=False)
-
         train_var = X_train.var()
         train_active = train_var[train_var > 1e-10].index
         X_train = X_train[train_active]
         X_test = X_test[train_active]
-        
         model_long_only = MeanRisk(
             risk_measure=RiskMeasure.VARIANCE,
             objective_function=ObjectiveFunction.MAXIMIZE_UTILITY,
@@ -93,30 +80,43 @@ class Portfolio_strategy(Basic_Strategy):
             min_weights=0.0,
             max_weights=1,
             portfolio_params=dict(name="Long-Only Max Sharpe"),
-            solver="CLARABEL"        )
+            solver="CLARABEL"
+        )
         model_long_only.fit(X_train)
-
         pred_long_only = model_long_only.predict(X_test)
-
         weights = pred_long_only.weights_dict
-        
+
         current_state = data_to_process['current_state'].iloc[-1]
         balance = current_state.balance
-        
         last_prices = data_to_process.xs('close', level=1, axis=1).iloc[-1]
-        
+
         decisions = {}
-        
         for instrument in self.instruments:
             weight = weights.get(instrument, 0)
-            
-            if weight <= 0:
-                decisions[instrument] = instr_Wait()
+            price = last_prices.get(instrument)
+
+            target_money = weight * balance if weight > 0 else 0
+
+            positions = current_state.positions.get(instrument, [])
+
+            if positions:
+                decisions[instrument] = Modify_Position(
+                    direction=1,
+                    new_volume=target_money,
+                    entry_price=price,
+                    take_profit=float('inf'),
+                    stop_loss=0
+                )
             else:
-                price = last_prices[instrument]
-                
-                volume = weight * balance
-                
-                decisions[instrument] = Open_Position(direction=1,  volume=volume,entry_price=price,take_profit=float('inf'), stop_loss=0)
-        
+                if target_money > 0:
+                    decisions[instrument] = Open_Position(
+                        direction=1,
+                        volume=target_money,
+                        entry_price=price,
+                        take_profit=float('inf'),
+                        stop_loss=0
+                    )
+                else:
+                    decisions[instrument] = instr_Wait()
+
         return Mixed_response(decisions)
