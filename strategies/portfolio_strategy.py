@@ -59,13 +59,15 @@ class Portfolio_strategy(Basic_Strategy):
             self.instruments = [name for name in all_level0 if name != 'current_state']
 
         is_rebalance_day = (self.bar_count % self.rebalance_period == 0)
+
         self.bar_count += 1
 
-        if not is_rebalance_day:
-            print('ffff', file = sys.stderr)
-            print(self.rebalance_period, file = sys.stderr)
-            self.logger.debug('Вернул Wait')
+        if is_rebalance_day:
+  
             return Wait()
+        
+     
+        
 
         self.logger.debug('Вернул не Wait')
 

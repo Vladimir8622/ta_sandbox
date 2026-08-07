@@ -77,6 +77,8 @@ class DemoBroker(Basic_Broker):
         state.margin -= order.filled_volume * (1 + self.commissions + self.slippage)
         state.positions.setdefault(order.symbol, []).append(position)
         state.pending_orders += self._make_exit_orders(order.symbol, position)
+        state.pending_orders.remove(order)
+
 
     def _fill_exit(self, state, order, price):
         positions = state.positions.get(order.symbol, [])
@@ -113,7 +115,6 @@ class DemoBroker(Basic_Broker):
                     self._fill_entry(new_state, order, price)
                 else:
                     self._fill_exit(new_state, order, price)
-                # ордер исполнен, не добавляем в still_pending
             still_pending.append(order)
         self._log_state('После обработки очереди ордеров.', new_state)
         return new_state
@@ -167,16 +168,19 @@ class DemoBroker(Basic_Broker):
                         if delta > 0:
                             param_to_change.new_volume = delta
                             param_to_change.direction == 1
-
                             order = self._response_to_order(instrument, decision)
+                            new_state.pending_orders.append(order)
                         elif delta < 0:
                             param_to_change.new_volume = delta
                             param_to_change.direction == -1
 
                             order = self._response_to_order(instrument, decision)
+                            new_state.pending_orders.append(order)
                         else: continue
 
             self._log_state('После обработки запроса.', new_state)
             return new_state
+        
 
+    
         raise ValueError('up to this moment every response must be processed') 

@@ -9,6 +9,12 @@ class State:
         locked = sum(pos.locked_volume for pos_list in self.positions.values() for pos in pos_list)
         return self.margin + locked
 
+    # def merge_position(self):
+    #     for name, positions in self.positions.items():
+    #         for position in positions:
+
+
+
     def copy(self):
         new_state = State(margin=self.margin)
         new_state.positions = {
