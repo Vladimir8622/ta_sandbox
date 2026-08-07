@@ -6,7 +6,7 @@ class Data_manager:
     def __init__(self):
         pass             
 
-    def load_instrument(self, market, active, timeframe, name, start, end):
+    def load_one_instrument_in_interval(self, market, active, timeframe, name, start, end):
         file_path = Path(f"data/{market}/{active}/{timeframe}/{name}.csv")
         df = pd.read_csv(file_path)
         df["begin"] = pd.to_datetime(df["begin"])
@@ -17,7 +17,19 @@ class Data_manager:
         mask = (df["begin"] >= start_dt) & (df["begin"] <= end_dt)
         df_filtered = df.loc[mask]
 
-        return df_filtered
+        df = df_filtered.set_index('begin')  
+            
+        multi_columns = pd.MultiIndex.from_product([[name], df.columns])
+        df.columns = multi_columns
+
+        data = []
+        
+        data.append(df)
+    
+        data = pd.concat(data, axis=1)
+        data = data.sort_index(axis=1)
+
+        return data
 
     def load_all_instrument_in_interval(self, market, active, timeframe, start, end):
 
@@ -42,7 +54,7 @@ class Data_manager:
             mask = (df["begin"] >= start_dt) & (df["begin"] <= end_dt)
             df_filtered = df.loc[mask]
 
-            if df_filtered['close'].isnull().mean() > 0.1:
+            if df_filtered['close'].isnull().mean() > 0.0:
                 continue
 
             if pd.isna(df_filtered['close'].iloc[0]):
@@ -57,5 +69,8 @@ class Data_manager:
         
         data = pd.concat(data, axis=1)
         data = data.sort_index(axis=1)
+
+        # чутка брутально, зато гарантирует чистоту данных
+        data = data.dropna(axis=1, how='any')
 
         return data

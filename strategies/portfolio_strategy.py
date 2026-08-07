@@ -29,10 +29,12 @@ class Portfolio_strategy(Basic_Strategy):
         self.rebalance_period = kwargs['rebalance_period']
         self.max_lot = kwargs['max_lot']
 
-        self.min_data_length = 300
-
         self.bar_count = 0            
         self.instruments = 'test'
+
+    @property
+    def min_data_length(self):
+        return 300
     
     @staticmethod
     def get_data_requirements():
@@ -65,10 +67,12 @@ class Portfolio_strategy(Basic_Strategy):
                
         data_to_process = data.copy()
         prices = data_to_process.xs('close', level=1, axis=1)
-        # не lookahead тк в будущее не посмотреть никак
-        prices = prices.ffill().bfill()
+
+        # необходимо убрать это отсюда. данные должны доезжать чистыми!!!
+        # # не lookahead тк в будущее не посмотреть никак
+        # prices = prices.ffill().bfill()
         # удаляем мусор, который имеет nan. вроде как такого не так много должно быть
-        prices = prices.dropna(axis=1, how='any')
+        # prices = prices.dropna(axis=1, how='any')
 
         log_ret = prices_to_returns(prices)
 
