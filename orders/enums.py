@@ -7,7 +7,8 @@ class Side(Enum):
 class OrderType(Enum):
     MARKET = auto()
     LIMIT = auto()
-    STOP = auto()
+    STOP_LOSS = auto()
+    TAKE_PROFIT = auto()
 
 class OrderStatus(Enum):
     PENDING = auto()

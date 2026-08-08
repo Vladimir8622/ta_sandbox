@@ -86,7 +86,7 @@ def run_engine(config: dict) -> None:
         
         for order in entry.get("pending_orders", []):
             orders.append({
-                "open_time": dt,
+                "open_time": order["created_at"],
                 "symbol": order["symbol"],
                 "side": order["side"],
                 "volume": order["volume"],
@@ -238,7 +238,7 @@ def run_engine(config: dict) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Single run of trading engine")
-    parser.add_argument('--config', type=str, default=r'configs/single_run/portfolio_strategy.yaml',
+    parser.add_argument('--config', type=str, default=r'configs\single_run\portfolio_strategy.yaml',
                         help='Path to YAML configuration file')
     args = parser.parse_args()
  

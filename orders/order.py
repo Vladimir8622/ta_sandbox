@@ -34,39 +34,39 @@ class Order:
         if self.order_type == OrderType.MARKET:
             return True
 
-        if self.order_type == OrderType.LIMIT:
-            # используется и для обычного лимитного входа и для tp 
-            if self.side == Side.BUY:
-                return price <= self.limit_price
-            else:
-                return price >= self.limit_price
+        # if self.order_type == OrderType.LIMIT:
+        #     if self.side == Side.BUY:
+        #         return price <= self.limit_price
+        #     else:
+        #         return price >= self.limit_price
 
-        if self.order_type == OrderType.STOP:
-            if self.side == Side.SELL:   
-                return price <= self.trigger_price
-            else:                          
-                return price >= self.trigger_price
+        if self.order_type == OrderType.STOP_LOSS:       
+            return price <= self.trigger_price
+        
+        if self.order_type == OrderType.TAKE_PROFIT:
+            return price >= self.trigger_price  
 
         return False
 
     def fill(self, price, volume=None):
         if self.status != OrderStatus.PENDING:
             raise ValueError(f"cannot fill order in status {self.status}")
+        
         self.filled_price = price
         self.filled_volume = volume or self.volume
         self.filled_at = datetime.now()
         self.status = OrderStatus.FILLED
 
     def cancel(self):
-        if self.status != OrderStatus.PENDING:
-            raise ValueError(f"cannot cancel order in status {self.status}")
+        # if self.status != OrderStatus.PENDING:
+        #     raise ValueError(f"cannot cancel order in status {self.status}")
         self.status = OrderStatus.CANCELLED
 
-    def reject(self, reason=None):
-        if self.status != OrderStatus.PENDING:
-            raise ValueError(f"cannot reject order in status {self.status}")
-        self.status = OrderStatus.REJECTED
-        self.reject_reason = reason
+    # def reject(self, reason=None):
+    #     if self.status != OrderStatus.PENDING:
+    #         raise ValueError(f"cannot reject order in status {self.status}")
+    #     self.status = OrderStatus.REJECTED
+    #     self.reject_reason = reason
 
     def copy(self):
         new_order = Order(

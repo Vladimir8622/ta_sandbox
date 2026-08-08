@@ -42,7 +42,7 @@ class DemoBroker(Basic_Broker):
         self.logger.debug('Вышел из mark_to_market')
         return new_state
 
-    def _response_to_order(self, instrument, decision):
+    def _make_market_order(self, instrument, decision):
         side = Side.BUY if decision.direction == 1 else Side.SELL
         return Order(symbol=instrument, side=side, volume=decision.volume,
                      order_type=OrderType.MARKET,
@@ -51,17 +51,23 @@ class DemoBroker(Basic_Broker):
 
     
     def _make_exit_orders(self, symbol, position):
-        close_side = Side.SELL if position.direction == 1 else Side.BUY
+        if position.direction == 1:
+            stop_side = Side.SELL
+            take_side = Side.BUY
+        elif position.direction == -1:
+            stop_side = Side.BUY
+            take_side = Side.SELL
+
         orders = []
         if position.stop_loss is not None:
-            orders.append(Order(symbol=symbol, side=close_side, volume=position.volume,
-                                 order_type=OrderType.STOP,          # SL
+            orders.append(Order(symbol=symbol, side=stop_side, volume=position.volume,
+                                 order_type=OrderType.STOP_LOSS,
                                  trigger_price=position.stop_loss,
                                  linked_position_id=position.id))
         if position.take_profit is not None:
-            orders.append(Order(symbol=symbol, side=close_side, volume=position.volume,
-                                 order_type=OrderType.LIMIT,         # TP
-                                 limit_price=position.take_profit,
+            orders.append(Order(symbol=symbol, side=take_side, volume=position.volume,
+                                 order_type=OrderType.TAKE_PROFIT,
+                                 trigger_price=position.take_profit,
                                  linked_position_id=position.id))
         return orders
 
@@ -78,6 +84,7 @@ class DemoBroker(Basic_Broker):
         state.positions.setdefault(order.symbol, []).append(position)
         state.pending_orders += self._make_exit_orders(order.symbol, position)
         state.pending_orders.remove(order)
+        state.history_orders.append(order)
 
 
     def _fill_exit(self, state, order, price):
@@ -103,11 +110,10 @@ class DemoBroker(Basic_Broker):
 
     def process_pending_orders(self, current_state, last_row):
         new_state = current_state.copy()
-        still_pending = []
 
         for order in new_state.pending_orders:
-            if order.status != OrderStatus.PENDING:
-                continue   # пропускаем уже не ожидающие
+            # if order.status != OrderStatus.PENDING:
+            #     continue   # пропускаем уже не ожидающие
 
             price = last_row[(order.symbol, 'close')]
             if order.is_triggered(price):
@@ -115,8 +121,9 @@ class DemoBroker(Basic_Broker):
                     self._fill_entry(new_state, order, price)
                 else:
                     self._fill_exit(new_state, order, price)
-            still_pending.append(order)
+
         self._log_state('После обработки очереди ордеров.', new_state)
+
         return new_state
     
     def check_response(self, current_state, response, last_row):
@@ -140,9 +147,9 @@ class DemoBroker(Basic_Broker):
                 if not new_state.positions[instrument]:
                     del new_state.positions[instrument]
 
-            for order in new_state.pending_orders:
-                if order.status == OrderStatus.PENDING:
-                    order.cancel()
+            # for order in new_state.pending_orders:
+            #     if order.status == OrderStatus.PENDING:
+            #         order.cancel()
             new_state.pending_orders = []
             return new_state
 
@@ -155,7 +162,7 @@ class DemoBroker(Basic_Broker):
 
                 elif isinstance(decision, Open_Position):
                     if decision.direction in (1, -1):
-                        order = self._response_to_order(instrument, decision)
+                        order = self._make_market_order(instrument, decision)
                         new_state.pending_orders.append(order)
                     else:
                         raise ValueError('Неправильно заданый ответ стратегии')
@@ -168,13 +175,13 @@ class DemoBroker(Basic_Broker):
                         if delta > 0:
                             param_to_change.new_volume = delta
                             param_to_change.direction == 1
-                            order = self._response_to_order(instrument, decision)
+                            order = self._make_market_order(instrument, decision)
                             new_state.pending_orders.append(order)
                         elif delta < 0:
                             param_to_change.new_volume = delta
                             param_to_change.direction == -1
 
-                            order = self._response_to_order(instrument, decision)
+                            order = self._make_market_order(instrument, decision)
                             new_state.pending_orders.append(order)
                         else: continue
 

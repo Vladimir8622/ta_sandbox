@@ -65,6 +65,7 @@ def create_logs(response,new_state,datetime):
                 "linked_position_id": order.linked_position_id,
                 "take_profit": order.take_profit,
                 "stop_loss": order.stop_loss,
+                "created_at":order.created_at
         })
     
     # 3. Формируем запись лога
@@ -183,11 +184,16 @@ for i in range(min_length, len(data)):
                                        response=response,
                                        last_row=last_row)
 
+    # тут появился маркетный ордер
+
     logger.debug('Брокер обрабатывает очередь ордеров')
     new_state = broker.mark_to_market(current_state=new_state,
                                        last_row=last_row)
     new_state = broker.process_pending_orders(current_state=new_state,
                                                 last_row=last_row)
+
+    # тут маркетный ушел в века и появилось два стоп ордера
+    
     logger.debug('Баланс после действий ордера')
     logger.debug(new_state.balance)
     logger.debug('Маржа после действий ордера')

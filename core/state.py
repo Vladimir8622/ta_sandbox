@@ -3,6 +3,7 @@ class State:
         self.margin = margin
         self.positions = {}
         self.pending_orders = []
+        self.history_orders = []
 
     @property
     def balance(self):
