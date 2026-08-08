@@ -119,6 +119,7 @@ class DemoBroker(Basic_Broker):
                 if lot.amount <= 1e-9:
                     self._cancel_linked_orders(state, lot.id)
                 else:
+                    # Сколько у лота ордеров привязанных?
                     self._sync_linked_orders(state, lot)
 
         elif abs(fill_volume - position.volume) <= 1e-9:
@@ -179,16 +180,14 @@ class DemoBroker(Basic_Broker):
 
         if isinstance(response, Close_all):
             self.logger.debug('Получил Close_all')
-            self.logger.debug('УСТАРЕВШАЯ ФУНКЦИЯ!')
-            # Устарело
-            # for instrument, position in list(new_state.positions.items()):
-            #     last_price = last_row[(instrument, 'close')]
-            #     commission = position.amount * last_price * (self.commissions + self.slippage)
-            #     new_state.margin += position.locked_volume - commission
-            #     for lot in list(position.lots):
-            #         self._cancel_linked_orders(new_state, lot.id)
-            #     del new_state.positions[instrument]
-            # new_state.pending_orders = [o for o in new_state.pending_orders if o.status == OrderStatus.PENDING]
+            for instrument, position in list(new_state.positions.items()):
+                last_price = last_row[(instrument, 'close')]
+                commission = position.amount * last_price * (self.commissions + self.slippage)
+                new_state.margin += position.locked_volume - commission
+                for lot in list(position.lots):
+                    self._cancel_linked_orders(new_state, lot.id)
+                del new_state.positions[instrument]
+            new_state.pending_orders = [o for o in new_state.pending_orders if o.status == OrderStatus.PENDING]
             return new_state
 
         if isinstance(response, Mixed_response):

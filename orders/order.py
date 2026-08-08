@@ -7,8 +7,7 @@ from orders.enums import Side, OrderStatus, OrderType
 class Order:
     def __init__(self, symbol, side, volume, order_type,
                  take_profit=None, stop_loss=None,
-                 limit_price=None, trigger_price=None,
-                 linked_position_id=None, linked_lot_id=None):
+                 limit_price=None, trigger_price=None, linked_lot_id=None):
         self.id = str(uuid4())
         self.symbol = symbol
         self.side = side
@@ -58,15 +57,15 @@ class Order:
         self.status = OrderStatus.FILLED
 
     def cancel(self):
-        # if self.status != OrderStatus.PENDING:
-        #     raise ValueError(f"cannot cancel order in status {self.status}")
+        if self.status != OrderStatus.PENDING:
+            raise ValueError(f"cannot cancel order in status {self.status}")
         self.status = OrderStatus.CANCELLED
 
-    # def reject(self, reason=None):
-    #     if self.status != OrderStatus.PENDING:
-    #         raise ValueError(f"cannot reject order in status {self.status}")
-    #     self.status = OrderStatus.REJECTED
-    #     self.reject_reason = reason
+    def reject(self, reason=None):
+        if self.status != OrderStatus.PENDING:
+            raise ValueError(f"cannot reject order in status {self.status}")
+        self.status = OrderStatus.REJECTED
+        self.reject_reason = reason
 
     def copy(self):
         new_order = Order(
@@ -81,5 +80,4 @@ class Order:
         new_order.filled_volume = self.filled_volume
         new_order.filled_at = self.filled_at
         new_order.created_at = self.created_at
-        new_order.linked_lot_id = self.linked_lot_id
         return new_order
