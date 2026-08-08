@@ -57,7 +57,7 @@ def create_logs(response,new_state,datetime):
                 "order_type": order.order_type,
                 "limit_price": order.limit_price,
                 "trigger_price": order.trigger_price,
-                "linked_position_id": order.linked_position_id,
+                "linked_lot_id": order.linked_lot_id,
                 "take_profit": order.take_profit,
                 "stop_loss": order.stop_loss,
                 "created_at": order.created_at
@@ -75,7 +75,7 @@ def create_logs(response,new_state,datetime):
                 "filled_price": order.filled_price,
                 "filled_volume": order.filled_volume,
                 "trigger_price": order.trigger_price,
-                "linked_position_id": order.linked_position_id,
+                "linked_lot_id": order.linked_lot_id,
                 "take_profit": order.take_profit,
                 "stop_loss": order.stop_loss,
                 "created_at": order.created_at,
@@ -192,28 +192,26 @@ for i in range(min_length, len(data)):
     current_state = data['current_state'].iloc[i-1]
     last_row = data.iloc[i]
 
+    new_state = broker.mark_to_market(current_state=current_state,
+                                        last_row=last_row)
+
+    logger.debug('Стратегия принимает решение')
     response = strategy.make_decision(history)
+    logger.debug(f'Стратегия вернула {type(response)}')
+
     logger.debug('Брокер обрабатывает решение стратегии')
-    new_state = broker.check_response(current_state=current_state,
+    new_state = broker.check_response(current_state=new_state,
                                        response=response,
                                        last_row=last_row)
 
-    # тут появился маркетный ордер
-
     logger.debug('Брокер обрабатывает очередь ордеров')
-    new_state = broker.mark_to_market(current_state=new_state,
-                                       last_row=last_row)
     new_state = broker.process_pending_orders(current_state=new_state,
                                                 last_row=last_row)
-
-    # тут маркетный ушел в века и появилось два стоп ордера
     
-    logger.debug('Баланс после действий ордера')
-    logger.debug(new_state.balance)
-    logger.debug('Маржа после действий ордера')
-    logger.debug(new_state.margin)
-    logger.debug(len(new_state.pending_orders))
-
+    logger.debug(f'Баланс после действий ордера: {new_state.balance}')
+    logger.debug(f'Маржа после действий ордера: {new_state.margin}')
+    logger.debug(f'Позиций: {len(new_state.positions)}')
+    logger.debug(f'Закрепленных ордеров: {len(new_state.pending_orders)}')
 
     data.iloc[i, data.columns.get_loc('current_state')] = new_state
 

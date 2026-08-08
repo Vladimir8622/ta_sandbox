@@ -20,8 +20,8 @@ class DemoBroker(Basic_Broker):
     def _log_state(self, message, state):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(message)
-            self.logger.debug(f'Баланс : {state.balance}.')
-            self.logger.debug(f'Количество позиций: {len(state.positions)}.')
+            self.logger.debug(f'Баланс : {state.balance}.Маржа : {state.margin}')
+            self.logger.debug(f'Позиций: {len(state.positions)}. Закрепленных ордеров: {len(state.pending_orders)}. Ордеров в истории: {len(state.history_orders)}.')
 
     def mark_to_market(self, current_state, last_row):
         new_state = current_state.copy()
@@ -62,6 +62,7 @@ class DemoBroker(Basic_Broker):
                 order.cancel()
 
     def _cancel_sibling_exit_order(self, state, order):
+        # Закрываем тип связанные ордера
         """OCO — теперь СКОУПЛЕН на конкретный лот, а не на всю позицию."""
         if order.linked_lot_id is None:
             return
@@ -77,13 +78,14 @@ class DemoBroker(Basic_Broker):
     def _fill_order(self, state, order, price):
         position = state.positions.get(order.symbol)
 
+        # Точно ли нужно?
         if order.linked_lot_id is not None:
             lot = None
             if position is not None:
                 lot = next((l for l in position.lots if l.id == order.linked_lot_id), None)
-            if position is None or position.id != order.linked_position_id or lot is None:
-                order.cancel()
-                return
+            # if position is None or position.id != order.linked_position_id or lot is None:
+            #     order.cancel()
+            #     return
 
         order.fill(price)
         self._cancel_sibling_exit_order(state, order)
@@ -140,18 +142,30 @@ class DemoBroker(Basic_Broker):
                 instrument, new_position, lot, order.stop_loss, order.take_profit)
 
         state.history_orders.append(order)
+
     def process_pending_orders(self, current_state, last_row):
+        self.logger.debug('Зашел в process_pending_orders')
+        self._log_state('Перед обработкой очереди ордеров.', current_state)
         new_state = current_state.copy()
 
         for order in new_state.pending_orders:
             if order.status != OrderStatus.PENDING:
+                # А как такие вообще должны сюда попадать?
+                # вот и ответ. через связанные id. закрываются заранее
+                # raise ValueError(f'Незакрепленный ордер в списке закрепленных. Конкретно {order.status}')
                 continue
+
             price = last_row[(order.symbol, 'close')]
             if order.is_triggered(price):
                 self._fill_order(new_state, order, price)
+            else:
+                # Ордер не задействован
+                continue
 
         new_state.pending_orders = [o for o in new_state.pending_orders if o.status == OrderStatus.PENDING]
+        # Почему не тут добавление обработанных ордеров в историю? Получается кажется что в историю сохранются только маркетные и выполненые граничные.
 
+        self.logger.debug('Вышел из process_pending_orders')
         self._log_state('После обработки очереди ордеров.', new_state)
         return new_state
 
@@ -160,20 +174,25 @@ class DemoBroker(Basic_Broker):
         self._log_state('Перед обработкой запроса.', new_state)
 
         if isinstance(response, Wait):
+            self.logger.debug('Получил Wait, вернул без изменений')
             return new_state
 
         if isinstance(response, Close_all):
-            for instrument, position in list(new_state.positions.items()):
-                last_price = last_row[(instrument, 'close')]
-                commission = position.amount * last_price * (self.commissions + self.slippage)
-                new_state.margin += position.locked_volume - commission
-                for lot in list(position.lots):
-                    self._cancel_linked_orders(new_state, lot.id)
-                del new_state.positions[instrument]
-            new_state.pending_orders = [o for o in new_state.pending_orders if o.status == OrderStatus.PENDING]
+            self.logger.debug('Получил Close_all')
+            self.logger.debug('УСТАРЕВШАЯ ФУНКЦИЯ!')
+            # Устарело
+            # for instrument, position in list(new_state.positions.items()):
+            #     last_price = last_row[(instrument, 'close')]
+            #     commission = position.amount * last_price * (self.commissions + self.slippage)
+            #     new_state.margin += position.locked_volume - commission
+            #     for lot in list(position.lots):
+            #         self._cancel_linked_orders(new_state, lot.id)
+            #     del new_state.positions[instrument]
+            # new_state.pending_orders = [o for o in new_state.pending_orders if o.status == OrderStatus.PENDING]
             return new_state
 
         if isinstance(response, Mixed_response):
+            self.logger.debug('Получил Mixed_response')
             for instrument, decision in response.positions.items():
 
                 if isinstance(decision, instr_Wait):
@@ -182,6 +201,7 @@ class DemoBroker(Basic_Broker):
                 elif isinstance(decision, Open_Position):
                     if decision.direction not in (1, -1):
                         raise ValueError('Неправильно заданый ответ стратегии')
+                    
                     side = Side.BUY if decision.direction == 1 else Side.SELL
                     order = Order(symbol=instrument, side=side, volume=decision.volume,
                                   order_type=OrderType.MARKET,
@@ -198,6 +218,9 @@ class DemoBroker(Basic_Broker):
                                       order_type=OrderType.MARKET,
                                       stop_loss=decision.stop_loss, take_profit=decision.take_profit)
                         new_state.pending_orders.append(order)
+                    else:
+                        # Никаких изменений по активу
+                        continue
 
             self._log_state('После обработки запроса.', new_state)
             return new_state

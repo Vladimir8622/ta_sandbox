@@ -4,8 +4,10 @@ from responses.global_response.mixed_response import Mixed_response
 from responses.instrument_response.instr_wait import instr_Wait
 from responses.global_response.wait import Wait
 
-import random, logging
-
+import random, logging, time
+# Удалить для предсказуемости!
+# random.seed(time.time())
+# random.seed(42)
 
 class DemoStrategy(Basic_Strategy):
 

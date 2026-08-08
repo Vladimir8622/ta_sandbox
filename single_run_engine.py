@@ -97,7 +97,7 @@ def run_engine(config: dict) -> None:
                 "order_type": order["order_type"],
                 "limit_price": order["limit_price"],
                 "trigger_price": order["trigger_price"],
-                "linked_position_id": order["linked_position_id"],
+                "linked_lot_id": order["linked_lot_id"],
                 "take_profit": order["take_profit"],
                 "stop_loss": order["stop_loss"],
             })
@@ -116,7 +116,7 @@ def run_engine(config: dict) -> None:
                 "filled_price": order["filled_price"],
                 "filled_volume": order["filled_volume"],
                 "trigger_price": order["trigger_price"],
-                "linked_position_id": order["linked_position_id"],
+                "linked_lot_id": order["linked_lot_id"],
                 "take_profit": order["take_profit"],
                 "stop_loss": order["stop_loss"],
                 "created_at": order["created_at"],
@@ -185,7 +185,7 @@ def run_engine(config: dict) -> None:
         writer.writerows(trades)
 
     with open(orders_csv_path, 'w', newline='', encoding='utf-8') as f:
-        fieldnames = ["open_time","symbol","side","volume","order_type","limit_price","trigger_price","linked_position_id",
+        fieldnames = ["open_time","symbol","side","volume","order_type","limit_price","trigger_price","linked_lot_id",
     "take_profit","stop_loss",]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -193,7 +193,7 @@ def run_engine(config: dict) -> None:
     with open(history_orders_csv_path, 'w', newline='', encoding='utf-8') as f:
         fieldnames = ["id", "symbol", "side", "order_type", "status", "volume",
                       "filled_price", "filled_volume", "trigger_price",
-                      "linked_position_id", "take_profit", "stop_loss",
+                      "linked_lot_id", "take_profit", "stop_loss",
                       "created_at", "filled_at"]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -269,7 +269,7 @@ def run_engine(config: dict) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Single run of trading engine")
-    parser.add_argument('--config', type=str, default=r'configs\single_run\portfolio_strategy.yaml',
+    parser.add_argument('--config', type=str, default=r'configs\single_run\portfolio_strategy_dataset_usage.yaml',
                         help='Path to YAML configuration file')
     args = parser.parse_args()
  

@@ -20,7 +20,6 @@ class Order:
 
         self.limit_price = limit_price     
         self.trigger_price = trigger_price  
-        self.linked_position_id = linked_position_id 
         self.linked_lot_id = linked_lot_id 
 
         self.status = OrderStatus.PENDING
@@ -75,11 +74,12 @@ class Order:
             order_type=self.order_type, take_profit=self.take_profit,
             stop_loss=self.stop_loss, limit_price=self.limit_price,
             trigger_price=self.trigger_price,
-            linked_position_id=self.linked_position_id)
+            linked_lot_id=self.linked_lot_id)
         new_order.id = self.id
         new_order.status = self.status
         new_order.filled_price = self.filled_price
         new_order.filled_volume = self.filled_volume
         new_order.filled_at = self.filled_at
         new_order.created_at = self.created_at
+        new_order.linked_lot_id = self.linked_lot_id
         return new_order
