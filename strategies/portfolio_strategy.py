@@ -33,7 +33,7 @@ class Portfolio_strategy(Basic_Strategy):
 
         self.logger = logging.getLogger(kwargs['main_logger_name'] + '.' + __name__ + '.' + self.__class__.__name__)
 
-        self.bar_count = 0            
+        self.bar_count = 1           
         self.instruments = 'test'
 
     @property
@@ -62,8 +62,7 @@ class Portfolio_strategy(Basic_Strategy):
 
         self.bar_count += 1
 
-        if is_rebalance_day:
-  
+        if not is_rebalance_day:
             return Wait()
         
      
@@ -101,7 +100,7 @@ class Portfolio_strategy(Basic_Strategy):
         pred_long_only = model_long_only.predict(X_test)
         weights = pred_long_only.weights_dict
 
-        current_state = data_to_process['current_state'].iloc[-1]
+        current_state = data_to_process['current_state'].iloc[-2]
         balance = current_state.balance
         last_prices = data_to_process.xs('close', level=1, axis=1).iloc[-1]
 
@@ -112,9 +111,9 @@ class Portfolio_strategy(Basic_Strategy):
 
             target_money = weight * balance if weight > 0 else 0
 
-            positions = current_state.positions.get(instrument, [])
+            position = current_state.positions.get(instrument)
 
-            if len(positions) != 0:
+            if position is not None:
                 decisions[instrument] = Modify_Position(
                     direction=1,
                     new_volume=target_money,

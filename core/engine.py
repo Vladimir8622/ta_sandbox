@@ -38,22 +38,17 @@ def create_logs(response,new_state,datetime):
     #             'stop_loss': decision.stop_loss
     #         }
     
-    # 2. Преобразуем позиции (new_state.positions) в словарь списков словарей
     positions_dict = {}
-    for instrument, pos_list in new_state.positions.items():
-        positions_dict[instrument] = []
-        for pos in pos_list:
-            positions_dict[instrument].append({
-                'direction': pos.direction,
-                'volume': pos.volume,
-                'entry_price': pos.entry_price,
-                'take_profit': pos.take_profit,
-                'stop_loss': pos.stop_loss,
-                'amount': pos.amount
-            })
+    for instrument, pos in new_state.positions.items():
+        positions_dict[instrument] = {
+            'direction': pos.direction,
+            'volume': pos.volume,
+            'entry_price': pos.entry_price,
+            'amount': pos.amount,
+            'locked_volume': pos.locked_volume,
+        }
 
     pending_orders_dict = []
-
     for order in new_state.pending_orders:
         pending_orders_dict.append({
                 "symbol": order.symbol,
@@ -65,16 +60,35 @@ def create_logs(response,new_state,datetime):
                 "linked_position_id": order.linked_position_id,
                 "take_profit": order.take_profit,
                 "stop_loss": order.stop_loss,
-                "created_at":order.created_at
+                "created_at": order.created_at
         })
-    
-    # 3. Формируем запись лога
+
+    history_orders_dict = []
+    for order in new_state.history_orders:
+        history_orders_dict.append({
+                "id": order.id,
+                "symbol": order.symbol,
+                "side": order.side,
+                "order_type": order.order_type,
+                "status": order.status,
+                "volume": order.volume,
+                "filled_price": order.filled_price,
+                "filled_volume": order.filled_volume,
+                "trigger_price": order.trigger_price,
+                "linked_position_id": order.linked_position_id,
+                "take_profit": order.take_profit,
+                "stop_loss": order.stop_loss,
+                "created_at": order.created_at,
+                "filled_at": order.filled_at,
+        })
+
     current_line = {
             'datetime': datetime,
             'balance': new_state.balance,
             'margin': new_state.margin,
             'positions': positions_dict,
             'pending_orders': pending_orders_dict,
+            'history_orders': history_orders_dict,
         }
     return current_line
 

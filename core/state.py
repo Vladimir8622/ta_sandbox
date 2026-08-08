@@ -1,27 +1,20 @@
 class State:
     def __init__(self, margin=100):
         self.margin = margin
-        self.positions = {}
+        self.positions = {}       # instrument -> Position (одна на инструмент)
         self.pending_orders = []
         self.history_orders = []
 
     @property
     def balance(self):
-        locked = sum(pos.locked_volume for pos_list in self.positions.values() for pos in pos_list)
+        locked = sum(pos.locked_volume for pos in self.positions.values())
         return self.margin + locked
-
-    # def merge_position(self):
-    #     for name, positions in self.positions.items():
-    #         for position in positions:
-
-
 
     def copy(self):
         new_state = State(margin=self.margin)
         new_state.positions = {
-            instr: [pos.copy() for pos in pos_list]
-            for instr, pos_list in self.positions.items()
+            instr: pos.copy() for instr, pos in self.positions.items()
         }
         new_state.pending_orders = [order.copy() for order in self.pending_orders]
-
+        new_state.history_orders = list(self.history_orders)
         return new_state

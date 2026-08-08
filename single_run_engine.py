@@ -23,10 +23,12 @@ def run_engine(config: dict) -> None:
     equity_filename = config.get('output', {}).get('equity_plot', 'equity.png')
     trades_filename = config.get('output', {}).get('trades_csv', 'trades_log.csv')
     orders_filename = config.get('output', {}).get('orders_csv', 'orders_log.csv')
+    history_filename = config.get('output', {}).get('history_orders_csv', 'history_orders_log.csv')
 
     equity_plot_path = os.path.join(run_dir, equity_filename)
     trades_csv_path = os.path.join(run_dir, trades_filename)
     orders_csv_path = os.path.join(run_dir, orders_filename)
+    history_orders_csv_path = os.path.join(run_dir, history_filename)
 
     # Формируем словарь для передачи в Engine
     all_params = {
@@ -76,14 +78,16 @@ def run_engine(config: dict) -> None:
         return
 
     trades = []
-    open_trades = {}  # instrument -> trade_info
+    open_trades = {}
     orders = []
+    history_orders_seen = set()
+    history_orders = []
 
     for entry in logs:
         dt = entry['datetime']
-        current_positions = entry['positions']  # dict {instr: [pos_dict, ...]}
+        current_positions = entry['positions']
         balance = entry['balance']
-        
+
         for order in entry.get("pending_orders", []):
             orders.append({
                 "open_time": order["created_at"],
@@ -98,26 +102,43 @@ def run_engine(config: dict) -> None:
                 "stop_loss": order["stop_loss"],
             })
 
+        for order in entry.get("history_orders", []):
+            if order["id"] in history_orders_seen:
+                continue
+            history_orders_seen.add(order["id"])
+            history_orders.append({
+                "id": order["id"],
+                "symbol": order["symbol"],
+                "side": order["side"],
+                "order_type": order["order_type"],
+                "status": order["status"],
+                "volume": order["volume"],
+                "filled_price": order["filled_price"],
+                "filled_volume": order["filled_volume"],
+                "trigger_price": order["trigger_price"],
+                "linked_position_id": order["linked_position_id"],
+                "take_profit": order["take_profit"],
+                "stop_loss": order["stop_loss"],
+                "created_at": order["created_at"],
+                "filled_at": order["filled_at"],
+            })
+
         instruments_with_pos = set(current_positions.keys())
 
         # Открытие новых позиций
         for instr in instruments_with_pos:
-            pos_list = current_positions[instr]
-            if pos_list:  # есть позиция
+            pos = current_positions[instr]
+            if pos:  # есть позиция (непустой dict)
                 if instr not in open_trades:
-                    pos = pos_list[0]
                     open_trades[instr] = {
                         'instrument': instr,
                         'open_time': dt,
                         'direction': pos['direction'],
                         'volume': pos['volume'],
                         'entry_price': pos['entry_price'],
-                        'take_profit': pos['take_profit'],
-                        'stop_loss': pos['stop_loss'],
                         'open_balance': balance
                     }
             else:
-                # Позиции нет – закрываем, если была открыта
                 if instr in open_trades:
                     trade = open_trades.pop(instr)
                     trade['close_time'] = dt
@@ -169,6 +190,16 @@ def run_engine(config: dict) -> None:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(orders)
+    with open(history_orders_csv_path, 'w', newline='', encoding='utf-8') as f:
+        fieldnames = ["id", "symbol", "side", "order_type", "status", "volume",
+                      "filled_price", "filled_volume", "trigger_price",
+                      "linked_position_id", "take_profit", "stop_loss",
+                      "created_at", "filled_at"]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(history_orders)
+
+    print(f"Записано {len(history_orders)} исполненных/отменённых ордеров в {history_orders_csv_path}")
 
 
     print(f"Записано {len(orders)} ордеров в {orders_csv_path}")
@@ -238,7 +269,7 @@ def run_engine(config: dict) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Single run of trading engine")
-    parser.add_argument('--config', type=str, default=r'configs\single_run\portfolio_strategy.yaml',
+    parser.add_argument('--config', type=str, default=r'configs\single_run\demo_strategy.yaml',
                         help='Path to YAML configuration file')
     args = parser.parse_args()
  
