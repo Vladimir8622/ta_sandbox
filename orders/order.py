@@ -8,7 +8,7 @@ class Order:
     def __init__(self, symbol, side, volume, order_type,
                  take_profit=None, stop_loss=None,
                  limit_price=None, trigger_price=None,
-                 linked_position_id=None):
+                 linked_position_id=None, linked_lot_id=None):
         self.id = str(uuid4())
         self.symbol = symbol
         self.side = side
@@ -20,7 +20,8 @@ class Order:
 
         self.limit_price = limit_price     
         self.trigger_price = trigger_price  
-        self.linked_position_id = linked_position_id  
+        self.linked_position_id = linked_position_id 
+        self.linked_lot_id = linked_lot_id 
 
         self.status = OrderStatus.PENDING
         self.created_at = datetime.now()
