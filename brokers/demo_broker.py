@@ -77,15 +77,14 @@ class DemoBroker(Basic_Broker):
 
     def _fill_order(self, state, order, price):
         position = state.positions.get(order.symbol)
+        lot = None
 
-        # Точно ли нужно?
         if order.linked_lot_id is not None:
-            lot = None
             if position is not None:
-                lot = next((l for l in position.lots if l.id == order.linked_lot_id), None)
-            # if position is None or position.id != order.linked_position_id or lot is None:
-            #     order.cancel()
-            #     return
+                lot = next(
+                    (l for l in position.lots if l.id == order.linked_lot_id),
+                    None
+                )
 
         order.fill(price)
         self._cancel_sibling_exit_order(state, order)
@@ -96,51 +95,100 @@ class DemoBroker(Basic_Broker):
         commission = fill_volume * (self.commissions + self.slippage)
 
         if position is None:
-            new_position = Position(direction=fill_dir, volume=fill_volume, entry_price=price)
+            new_position = Position(
+                direction=fill_dir,
+                volume=fill_volume,
+                entry_price=price
+            )
+
             lot = new_position.add_lot(fill_volume, price)
             state.positions[instrument] = new_position
             state.margin -= fill_volume + commission
+
             state.pending_orders += self._make_exit_orders(
-                instrument, new_position, lot, order.stop_loss, order.take_profit)
+                instrument,
+                new_position,
+                lot,
+                order.stop_loss,
+                order.take_profit
+            )
 
         elif position.direction == fill_dir:
             position.add(fill_volume, price)
             lot = position.add_lot(fill_volume, price)
             state.margin -= fill_volume + commission
+
             state.pending_orders += self._make_exit_orders(
-                instrument, position, lot, order.stop_loss, order.take_profit)
+                instrument,
+                position,
+                lot,
+                order.stop_loss,
+                order.take_profit
+            )
 
         elif fill_volume < position.volume - 1e-9:
-            close_amount = fill_volume / price
+
+            if order.linked_lot_id is not None:
+                if lot is None:
+                    order.cancel()
+                    return
+
+                # SL/TP закрывает весь конкретный лот
+                close_amount = lot.amount
+
+            else:
+                # Обычный выход / Modify_Position:
+                # volume — деньги, amount — количество инструмента
+                close_amount = fill_volume / price
+
             realized = position.reduce(close_amount)
             touched_lots = position.reduce_lots_fifo(close_amount)
+
             state.margin += realized - commission
+
             for lot in touched_lots:
                 if lot.amount <= 1e-9:
                     self._cancel_linked_orders(state, lot.id)
                 else:
-                    # Сколько у лота ордеров привязанных?
                     self._sync_linked_orders(state, lot)
 
         elif abs(fill_volume - position.volume) <= 1e-9:
             state.margin += position.locked_volume - commission
+
             for lot in list(position.lots):
                 self._cancel_linked_orders(state, lot.id)
+
             del state.positions[instrument]
 
         else:
             remainder = fill_volume - position.volume
+
             state.margin += position.locked_volume - commission
+
             for lot in list(position.lots):
                 self._cancel_linked_orders(state, lot.id)
 
-            remainder_commission = remainder * (self.commissions + self.slippage)
-            new_position = Position(direction=fill_dir, volume=remainder, entry_price=price)
+            remainder_commission = remainder * (
+                self.commissions + self.slippage
+            )
+
+            new_position = Position(
+                direction=fill_dir,
+                volume=remainder,
+                entry_price=price
+            )
+
             lot = new_position.add_lot(remainder, price)
             state.positions[instrument] = new_position
             state.margin -= remainder + remainder_commission
+
             state.pending_orders += self._make_exit_orders(
-                instrument, new_position, lot, order.stop_loss, order.take_profit)
+                instrument,
+                new_position,
+                lot,
+                order.stop_loss,
+                order.take_profit
+            )
 
         state.history_orders.append(order)
 
