@@ -44,11 +44,11 @@ class DemoBroker(Basic_Broker):
         if stop_loss is not None:
             orders.append(Order(symbol=instrument, side=exit_side, volume=lot.volume,
                                 order_type=OrderType.STOP_LOSS, trigger_price=stop_loss,
-                                linked_position_id=position.id, linked_lot_id=lot.id))
+                                linked_lot_id=lot.id))
         if take_profit is not None:
             orders.append(Order(symbol=instrument, side=exit_side, volume=lot.volume,
                                 order_type=OrderType.TAKE_PROFIT, trigger_price=take_profit,
-                                linked_position_id=position.id, linked_lot_id=lot.id))
+                                linked_lot_id=lot.id))
         return orders
 
     def _sync_linked_orders(self, state, lot):

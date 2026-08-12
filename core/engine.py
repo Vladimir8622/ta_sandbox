@@ -122,6 +122,8 @@ if params['instruments_metainfo']['type'] == 'single':
     instruments = params['instruments']
     instrument_names = [instruments['Name']]
 
+    timeframe = instruments['Timeframe']
+
     data = manager.load_one_instrument_in_interval(market = instruments['Market'], 
                                                 active = instruments['Active'], 
                                                 timeframe = instruments['Timeframe'],
@@ -132,16 +134,21 @@ if params['instruments_metainfo']['type'] == 'single':
 elif params['instruments_metainfo']['type'] == 'folder':
     instruments = params['instruments']
 
+    timeframe = instruments['Timeframe']
+
     data = manager.load_all_instrument_in_interval(market = instruments['Market'], 
                                                    active = instruments['Active'], 
                                                    timeframe = instruments['Timeframe'], 
                                                    start = instruments['Start'], 
                                                    end = instruments['End'])
 
+    
     instrument_names = data.columns.get_level_values(0).unique().tolist()
 
 elif params['instruments_metainfo']['type'] == 'dataset':
     instruments = params['instruments']
+
+    timeframe = instruments['Timeframe']
 
     data = manager.load_dataset(dataset_name = instruments['dataset_name'])
     
@@ -222,6 +229,8 @@ for i in range(min_length, len(data)):
         logs.append(current_line)
 
     logger.debug('end of processing bar')
+
+risk_free_rate = 0
     
 def calculate_metrics(states):
     if not states:
@@ -235,7 +244,9 @@ def calculate_metrics(states):
     
     initial_balance = balances[0] if balances else 1
     final_balance = balances[-1] if balances else 1
-    total_return = final_balance / initial_balance  
+
+    # diff in percentage
+    total_return = final_balance / initial_balance  - 1
     
     max_drawdown = 0
     peak = balances[0] if balances else 1
@@ -254,20 +265,31 @@ def calculate_metrics(states):
             returns.append(daily_return)
     
     if returns:
-        avg_return = sum(returns) / len(returns)
-        variance = sum((r - avg_return) ** 2 for r in returns) / len(returns)
+        if timeframe.endswith("d"):
+            periods_per_year = 252
+        elif timeframe.endswith("w"):
+            periods_per_year = 52
+        else:
+            raise ValueError(f"Not comleted sharp part for {timeframe}!")
+
+        periodic_rf = (1 + risk_free_rate) ** (1 / periods_per_year) - 1
+        
+        avg_excess_return = sum(r - periodic_rf for r in returns) / len(returns)
+        
+        avg_raw_return = sum(returns) / len(returns)
+        variance = sum((r - avg_raw_return) ** 2 for r in returns) / len(returns)
         std_dev = variance ** 0.5
 
         if std_dev > 0:
-            sharp_ratio = (avg_return / std_dev) 
+            annualized_sharpe = (avg_excess_return / std_dev) * (periods_per_year ** 0.5)
         else:
-            sharp_ratio = 0
+            annualized_sharpe = 0
     else:
-        sharp_ratio = 0
+        annualized_sharpe  = 0
     
     result = {
         "total_return": total_return,
-        "sharp_ratio": sharp_ratio,
+        "sharp_ratio": annualized_sharpe ,
         "max_drawdown": max_drawdown
     }
 

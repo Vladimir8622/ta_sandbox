@@ -3,6 +3,7 @@ instruments_metainfo:
 
 instruments:
   dataset_name: moex_adjusted_stock
+  Timeframe: "1d"
 
 brokers:
   commissions: 0.0001
