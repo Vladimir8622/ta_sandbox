@@ -269,7 +269,7 @@ def run_engine(config: dict) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Single run of trading engine")
-    parser.add_argument('--config', type=str, default=r'configs\single_run\portfolio_strategy_dataset_usage.yaml',
+    parser.add_argument('--config', type=str, default=r'configs\single_run\equal_weights.yaml',
                         help='Path to YAML configuration file')
     args = parser.parse_args()
  
