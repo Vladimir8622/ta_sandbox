@@ -92,33 +92,45 @@ def run_optimization(config):
     successful_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE and t.values is not None]
 
     if successful_trials:
+        best_return_trial = max(successful_trials, key=lambda t: t.values[0])
+        best_sharpe_trial = max(successful_trials, key=lambda t: t.values[1])
+        best_drawdown_trial = min(successful_trials, key=lambda t: t.values[2])
+        best_var_trial = min(successful_trials, key=lambda t: t.values[3])
+        best_cvar_trial = min(successful_trials, key=lambda t: t.values[4])
+
+        def extract_metrics(trial):
+            return {
+                'total_return': trial.values[0],
+                'sharp_ratio': trial.values[1],
+                'max_drawdown': trial.values[2],
+                'var_95': trial.values[3],
+                'cvar_95': trial.values[4]
+            }
+
+
         best_params = {
             'best_by_return': {
-                'params': max(successful_trials, key=lambda t: t.values[0]).params,
-                'metrics': {
-                    'total_return': max(successful_trials, key=lambda t: t.values[0]).values[0],
-                    'sharp_ratio': max(successful_trials, key=lambda t: t.values[0]).values[1],
-                    'max_drawdown': max(successful_trials, key=lambda t: t.values[0]).values[2]
-                }
+                'params': best_return_trial.params,
+                'metrics': extract_metrics(best_return_trial)
             },
             'best_by_sharpe': {
-                'params': max(successful_trials, key=lambda t: t.values[1]).params,
-                'metrics': {
-                    'total_return': max(successful_trials, key=lambda t: t.values[1]).values[0],
-                    'sharp_ratio': max(successful_trials, key=lambda t: t.values[1]).values[1],
-                    'max_drawdown': max(successful_trials, key=lambda t: t.values[1]).values[2]
-                }
+                'params': best_sharpe_trial.params,
+                'metrics': extract_metrics(best_sharpe_trial)
             },
             'best_by_drawdown': {
-                'params': min(successful_trials, key=lambda t: t.values[2]).params,
-                'metrics': {
-                    'total_return': min(successful_trials, key=lambda t: t.values[2]).values[0],
-                    'sharp_ratio': min(successful_trials, key=lambda t: t.values[2]).values[1],
-                    'max_drawdown': min(successful_trials, key=lambda t: t.values[2]).values[2]
-                }
+                'params': best_drawdown_trial.params,
+                'metrics': extract_metrics(best_drawdown_trial)
+            },
+            'best_by_cvar': {
+                'params': best_var_trial.params,
+                'metrics': extract_metrics(best_var_trial)
+            },
+            'best_by_cvar': {
+                'params': best_cvar_trial.params,
+                'metrics': extract_metrics(best_cvar_trial)
             }
         }
-        
+
         with open('best_params.json', 'w') as f:
             json.dump(best_params, f, indent=4)
 

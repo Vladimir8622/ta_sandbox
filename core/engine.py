@@ -254,16 +254,17 @@ def calculate_metrics(states):
     for balance in balances:
         if balance > peak:
             peak = balance
-        drawdown = (peak - balance) / peak * 100 if peak > 0 else 0
+        drawdown = (peak - balance) / peak if peak > 0 else 0
         if drawdown > max_drawdown:
             max_drawdown = drawdown
-    
+
     returns = []
     for i in range(1, len(balances)):
         if balances[i-1] != 0:
             daily_return = (balances[i] - balances[i-1]) / balances[i-1]
             returns.append(daily_return)
-    
+
+    # sharp calculation
     if returns:
         if timeframe.endswith("d"):
             periods_per_year = 252
@@ -286,11 +287,26 @@ def calculate_metrics(states):
             annualized_sharpe = 0
     else:
         annualized_sharpe  = 0
-    
+
+    # VaR and CVaR calculation
+    # change it if you want not 95 cvar
+    percentile  = 0.05
+
+    if returns:
+        # Calculate VaR
+        sorted_returns = sorted(returns)
+        var_95_index = max(1, int(percentile * len(sorted_returns)))
+        var_95 = sorted_returns[var_95_index]
+        
+        # CVaR: Average of the worst 5% of returns
+        cvar_95 = sum(sorted_returns[:var_95_index]) / var_95_index if var_95_index > 0 else 0
+        
     result = {
         "total_return": total_return,
         "sharp_ratio": annualized_sharpe ,
-        "max_drawdown": max_drawdown
+        "max_drawdown": max_drawdown,
+        "var_95": var_95,
+        "cvar_95": cvar_95
     }
 
     return result
