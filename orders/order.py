@@ -41,9 +41,9 @@ class Order:
 
 
         if self.order_type == OrderType.STOP_LOSS:       
-            return price >= self.trigger_price
+            return price <= self.trigger_price
         elif self.order_type == OrderType.TAKE_PROFIT:
-            return price <= self.trigger_price 
+            return price >= self.trigger_price 
 
         return False
 
