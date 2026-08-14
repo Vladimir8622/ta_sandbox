@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit
+import logging
 
 from strategies.basic_strategy import Basic_Strategy
 from responses.instrument_response.instr_open_position import Open_Position
@@ -45,6 +46,8 @@ class MA_cross(Basic_Strategy):
         self.short_period = kwargs['short_period']
         self.take_profit_percent = kwargs['take_profit_percent']
         self.stop_loss_percent = kwargs['stop_loss_percent']
+
+        self.logger = logging.getLogger(kwargs['main_logger_name'] + '.' + __name__ + '.' + self.__class__.__name__)
 
         self.Name = "test"
 

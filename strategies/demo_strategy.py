@@ -22,7 +22,7 @@ class DemoStrategy(Basic_Strategy):
         self.take_profit_percent = kwargs['take_profit_percent']
         self.stop_loss_percent = kwargs['stop_loss_percent']
 
-        # self.logger = logging.getLogger(kwargs['main_logger_name'] + '.' + __name__ + '.' + self.__class__.__name__)
+        self.logger = logging.getLogger(kwargs['main_logger_name'] + '.' + __name__ + '.' + self.__class__.__name__)
 
         self.Name = "test"
 
